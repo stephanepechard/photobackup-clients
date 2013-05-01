@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:title="Photo Backup Settings">
+    
+
+    <SwitchPreference
+        android:key="pref_service_running"
+        android:title="@string/service_title"
+        android:summaryOn="@string/service_state_running"
+        android:summaryOff="@string/service_state_not_running"
+        android:defaultValue="false"
+        android:disableDependentsState="true" />
+
+    <PreferenceCategory
+        android:title="@string/server_conf"
+        android:key="server_conf">
+    
+    	<EditTextPreference
+    		android:key="pref_server_url"
+    		android:title="@string/server_url_title"
+    		android:summary="@string/server_url_summary"   
+    		android:inputType="textUri"
+    		android:defaultValue=""
+    		android:dependency="pref_service_running" />
+
+    	<EditTextPreference
+    		android:key="pref_server_password"
+    		android:title="@string/server_password_title"
+    		android:summary="@string/server_password_summary"   
+    		android:inputType="textPassword"
+    		android:defaultValue=""
+    		android:dependency="pref_service_running" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/device_conf"
+        android:key="device_conf">
+    
+    	<EditTextPreference
+    		android:key="pref_pictures_path"
+    		android:title="@string/pictures_path_title"
+    		android:summary="@string/pictures_path_summary"
+    		android:inputType="textNoSuggestions"   
+    		android:defaultValue="@string/pictures_path_summary"
+    		android:dependency="pref_service_running" />
+
+    	<CheckBoxPreference
+        	android:key="pref_only_wifi"
+        	android:title="@string/only_wifi_title"
+        	android:summaryOn="@string/only_wifi"
+        	android:summaryOff="@string/not_only_wifi"
+        	android:defaultValue="false"
+        	android:dependency="pref_service_running" />
+
+    </PreferenceCategory>
+    
+    <PreferenceCategory
+        android:title="@string/pref_cat_other"
+        android:key="device_conf">
+    
+	</PreferenceCategory>
+    
+</PreferenceScreen>

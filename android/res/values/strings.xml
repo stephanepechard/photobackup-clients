@@ -2,7 +2,29 @@
 <resources>
 
     <string name="app_name">Photo Backup</string>
-    <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
 
+    <string name="service_title">Service</string>
+    <string name="service_state_running">The service is running.</string>
+    <string name="service_state_not_running">The service is not running.</string>
+
+    <string name="server_conf">Server configuration</string>
+
+    <string name="server_url_title">Server address</string>
+    <string name="server_url_summary">The address where your pictures are posted.</string>
+
+    <string name="server_password_title">Server password</string>
+    <string name="server_password_summary">The password of the server.</string>
+
+    <string name="device_conf">Device configuration</string>
+
+    <string name="pictures_path_title">Directory containing the pictures</string>
+    <string name="pictures_path_summary">/storage/sdcard0/DCIM/Camera</string>
+
+    <string name="only_wifi_title">Network use</string>
+    <string name="only_wifi">Backup on wifi only</string>
+    <string name="not_only_wifi">Backup on wifi and data network</string>
+
+    <string name="pref_cat_other">Other</string>
+
+    <string name="toast_urisyntaxexception">The given address is invalid!</string>
 </resources>
