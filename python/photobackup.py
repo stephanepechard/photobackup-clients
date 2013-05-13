@@ -23,7 +23,7 @@ def main():
         args = vars(parsed_args)
         upfile = { 'upfile': args['image'] }
         term = Terminal()
-        
+
         # ask the password of the server
         password = getpass.getpass(prompt='The server password: ')
         payload = { 'server_pass':
@@ -34,6 +34,8 @@ def main():
             request = requests.post(args['url'], files=upfile, data=payload)
         except requests.exceptions.MissingSchema:
             sys.exit(term.red + "ERROR: invalid URL: {}".format(args['url']))
+        except requests.exceptions.ConnectionError:
+            sys.exit(term.red + "ERROR: Connection refused")
 
         # manage the response
         if request.status_code == 200:
