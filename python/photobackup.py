@@ -41,7 +41,11 @@ def main():
         if request.status_code == 200:
             print(term.green + "Upload was successful!")
         elif request.status_code == 403:
-            print(term.red + "ERROR: Wrong password, upload failed!")
+            print(term.red + "ERROR: Wrong password!")
+        elif request.status_code == 408:
+            print(term.red + "ERROR: Request took too long!")
+        elif request.status_code == 500:
+            print(term.red + "ERROR: Server made a booboo!")
         else:
             print(term.red + "ERROR: Upload failed!")
 
