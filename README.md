@@ -34,6 +34,7 @@ You got:
  * 200 when the request was successful ;
  * 400 when the request was badly formed ;
  * 403 when the given password is not the same as the server's one ;
+ * 408 when the request timed out ;
  * 500 when an error occured on the server in the meanwhile.
 
 
