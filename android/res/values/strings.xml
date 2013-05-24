@@ -17,14 +17,10 @@
 
     <string name="device_conf">Device configuration</string>
 
-    <string name="pictures_path_title">Directory containing the pictures</string>
-    <string name="pictures_path_summary">/storage/sdcard0/DCIM/Camera</string>
-
     <string name="only_wifi_title">Network use</string>
     <string name="only_wifi">Backup on wifi only</string>
     <string name="not_only_wifi">Backup on wifi and data network</string>
 
-    <string name="pref_cat_other">Other</string>
-
     <string name="toast_urisyntaxexception">The given address is invalid!</string>
+    <string name="error_nopicturedirectory">The application couldn\'t find your pictures!\nSorry :-(</string>
 </resources>

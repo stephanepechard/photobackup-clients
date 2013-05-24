@@ -29,12 +29,16 @@ import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.FileObserver;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
 public class PhotoBackupService extends Service {
@@ -42,24 +46,14 @@ public class PhotoBackupService extends Service {
 	private static final String TAG = "PhotoBackupService";
 	private FileObserver observer = null;
 
+
 	/**
 	 * Constructor of the PhotoBackupService
 	 */
-	public PhotoBackupService() {
-		MultipartEntity entity = new MultipartEntity(
-				HttpMultipartMode.BROWSER_COMPATIBLE);
-		try {
-			entity.addPart("server_pass", new StringBody("plop"));
-		} catch (Exception e) {
+	public PhotoBackupService() {}
 
-		}
 
-		// final String path =
-		// android.os.Environment.getExternalStorageDirectory().toString() +
-		// "/DCIM/Camera";
-		final String path = "/storage/extSdCard/DCIM/Camera";
-		// TODO: real detection of system picture directories
-
+	private void createObserver(final String path) {
 		// set up a file observer to watch this directory
 		observer = new FileObserver(path) {
 			@Override
@@ -71,11 +65,28 @@ public class PhotoBackupService extends Service {
 					try {
 						postPhoto(path + "/" + file);
 					} catch (Exception e) {
+						createNotification("Error", "onEvent: catch");
 					}
 				}
 			}
 		};
 	}
+
+
+	private void createNotification(String title, String text) {
+		NotificationCompat.Builder builder = new NotificationCompat.Builder(
+				this).setSmallIcon(R.drawable.ic_launcher)
+				.setContentTitle(title).setContentText(text);
+
+		Intent notificationIntent = new Intent(this, ConfigActivity.class);
+		PendingIntent contentIntent = PendingIntent.getActivity(this, 0,
+				notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		builder.setContentIntent(contentIntent);
+
+		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		notificationManager.notify(0, builder.build());
+	}
+
 
 	/**
 	 * Called when an Intent is received via startService().
@@ -83,13 +94,21 @@ public class PhotoBackupService extends Service {
 	@Override
 	public int onStartCommand(final Intent intent, final int flags,
 			final int startId) {
+		super.onStartCommand(intent, flags, startId);
+
+		String pictureDirectory = intent.getStringExtra(ConfigActivity.PICTURE_DIR);
+		createObserver(pictureDirectory);
+
 		observer.startWatching(); // start the observer
-		Log.v(TAG, "FileObserver started");
+		Log.v(TAG, "FileObserver started on: " + pictureDirectory);
+
+		createNotification("Information", "Service started");
 
 		// We want this service to continue running until it is explicitly
 		// stopped, so return sticky.
 		return START_NOT_STICKY;
 	}
+
 
 	public void postPhoto(final String path) throws Exception {
 		// get the user preferences
@@ -115,17 +134,23 @@ public class PhotoBackupService extends Service {
 			int status = response.getStatusLine().getStatusCode();
 
 			System.out.println("Response: " + status);
+
+			// TODO: if not 200 => failure notification
+
 		} catch (Exception e) {
 			entity.addPart("upfile", new StringBody(""));
 		}
-
 	}
+
 
 	@Override
 	public void onDestroy() {
-		observer.stopWatching();
+		if (observer != null) {
+			observer.stopWatching();
+		}
 		Log.v(TAG, "FileObserver stopped");
 	}
+
 
 	/*
 	 * (non-Javadoc)
@@ -134,7 +159,6 @@ public class PhotoBackupService extends Service {
 	 */
 	@Override
 	public IBinder onBind(final Intent intent) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

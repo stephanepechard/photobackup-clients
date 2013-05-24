@@ -35,14 +35,6 @@
     <PreferenceCategory
         android:title="@string/device_conf"
         android:key="device_conf">
-    
-    	<EditTextPreference
-    		android:key="pref_pictures_path"
-    		android:title="@string/pictures_path_title"
-    		android:summary="@string/pictures_path_summary"
-    		android:inputType="textNoSuggestions"   
-    		android:defaultValue="@string/pictures_path_summary"
-    		android:dependency="pref_service_running" />
 
     	<CheckBoxPreference
         	android:key="pref_only_wifi"
@@ -53,11 +45,5 @@
         	android:dependency="pref_service_running" />
 
     </PreferenceCategory>
-    
-    <PreferenceCategory
-        android:title="@string/pref_cat_other"
-        android:key="device_conf">
-    
-	</PreferenceCategory>
     
 </PreferenceScreen>

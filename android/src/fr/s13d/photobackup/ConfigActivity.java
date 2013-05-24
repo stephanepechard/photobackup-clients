@@ -14,7 +14,11 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.PreferenceManager;
+import android.view.Gravity;
+import android.view.ViewGroup.LayoutParams;
 import android.webkit.URLUtil;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class ConfigActivity extends Activity implements OnSharedPreferenceChangeListener {
@@ -24,28 +28,50 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 	private static final String PREF_KEY_SERVER_URL = "pref_server_url";
 	private static final String PREF_KEY_SERVER_PASS = "pref_server_password";
 	private static final String PREF_KEY_SERVER_PASS_HASH = "pref_server_password_hash";
-	private static final String PREF_KEY_PICTURES_PATH = "pref_pictures_path";
 	private static final String PREF_KEY_ONLY_WIFI = "pref_only_wifi";
+	public static final String PICTURE_DIR = "fr.s13d.photobackup.PICTURE_DIR";
 
 	private Intent serviceIntent = null;
 	private SettingsFragment settingsFragment = null;
 	private Boolean hashIsComputed = false;
 
+
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		serviceIntent = new Intent(this, PhotoBackupService.class);
-		settingsFragment = new SettingsFragment();
+		String pictureDirectory = StorageManager.getPictureDirectory(this);
+		if (!pictureDirectory.isEmpty()) {
+			// the main service
+			serviceIntent = new Intent(this, PhotoBackupService.class);
+			serviceIntent.putExtra(PICTURE_DIR, pictureDirectory);
 
-		// Display the settings fragment as the main content.
-		getFragmentManager().beginTransaction().replace(android.R.id.content, settingsFragment).commit();
+			// Display the settings fragment as the main content.
+			settingsFragment = new SettingsFragment();
+			getFragmentManager().beginTransaction().replace(android.R.id.content, settingsFragment).commit();
+		} else {
+			// show an error text view
+			setContentView(R.layout.activity_config);
+			TextView errorTextView = new TextView(this);
+			errorTextView.setText(R.string.error_nopicturedirectory);
+			errorTextView.setTextAppearance(this, R.style.ErrorTextStyle);
+			errorTextView.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL);
+			RelativeLayout rl = (RelativeLayout)findViewById(R.id.config_layout);
+			RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+			lp.addRule(RelativeLayout.CENTER_HORIZONTAL);
+			lp.addRule(RelativeLayout.CENTER_VERTICAL);
+			rl.addView(errorTextView, lp);
+		}
 
 		// Init the preferences
 		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 		Editor editor = sharedPreferences.edit();
 		editor.putBoolean(PREF_KEY_SERVICE_RUNNING, isPhotoBackupServiceRunning());
 		// others
+		// EditTextPreference textPreference = (EditTextPreference)
+		// settingsFragment.findPreference(PREF_KEY_SERVER_URL);
+		// textPreference.setSummary(sharedPreferences.getString(PREF_KEY_SERVER_URL,
+		// ""));
 		editor.commit();
 	}
 
@@ -60,6 +86,7 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 		super.onPause();
 		PreferenceManager.getDefaultSharedPreferences(this).unregisterOnSharedPreferenceChangeListener(this);
 	}
+
 
 	@Override
 	public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
@@ -133,14 +160,6 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 			Editor editor = sharedPreferences.edit();
 			editor.putString(PREF_KEY_SERVER_PASS, "");
 			editor.commit();
-
-		} else if (key.equals(PREF_KEY_PICTURES_PATH)) {
-
-			// Allow the user to modify the directory where the pictures are
-			// stored.
-			String summary = sharedPreferences.getString(PREF_KEY_PICTURES_PATH, "");
-			EditTextPreference textPreference = (EditTextPreference) settingsFragment.findPreference(PREF_KEY_PICTURES_PATH);
-			textPreference.setSummary(summary);
 
 		} else if (key.equals(PREF_KEY_ONLY_WIFI)) {
 			// Allow the user not to use the mobile network to upload the
