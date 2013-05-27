@@ -33,5 +33,7 @@
     <string name="error_timeout">Server took too long to respond!</string>
     <string name="error_noresponse">Server seems asleep&#8230;</string>
     <string name="error_protocol">Transmission error&#8230;</string>
+    
+    <string name="thumbnail_description">Thumbnail of the image</string>
 
 </resources>

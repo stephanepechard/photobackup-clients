@@ -4,7 +4,6 @@ import java.util.List;
 
 import android.app.ListActivity;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
 import fr.s13d.photobackup.R;
 
 public class JournalActivity extends ListActivity {
@@ -21,8 +20,9 @@ public class JournalActivity extends ListActivity {
 		List<JournalEntry> values = datasource.getAllEntries();
 
 		// Use the SimpleCursorAdapter to show the elements in a ListView
-		ArrayAdapter<JournalEntry> adapter = new ArrayAdapter<JournalEntry>(this,
-				android.R.layout.simple_list_item_1, values);
+		//		ArrayAdapter<JournalEntry> adapter = new ArrayAdapter<JournalEntry>(this,
+		//				android.R.layout.simple_list_item_1, values);
+		JournalAdapter adapter = new JournalAdapter(this, values);
 		setListAdapter(adapter);
 	}
 

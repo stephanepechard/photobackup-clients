@@ -173,7 +173,7 @@ public class PhotoBackupService extends Service {
 
 		// Add it to the journal
 		datasource.open();
-		datasource.createEntry(now(), upfile.getName(), uploaded);
+		datasource.createEntry(now(), upfile.getAbsolutePath(), uploaded);
 		datasource.close();
 	}
 
