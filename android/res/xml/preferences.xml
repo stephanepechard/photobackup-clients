@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" android:title="Photo Backup Settings">
-    
 
     <SwitchPreference
         android:key="pref_service_running"
@@ -9,6 +8,7 @@
         android:summaryOff="@string/service_state_not_running"
         android:defaultValue="false"
         android:disableDependentsState="true" />
+
 
     <PreferenceCategory
         android:title="@string/server_conf"
@@ -31,6 +31,21 @@
     		android:dependency="pref_service_running" />
 
     </PreferenceCategory>
+
+
+    <PreferenceCategory
+        android:title="@string/info_conf"
+        android:key="info_conf">
+
+        <Preference android:title="@string/journal_title" >
+			<intent
+			    android:action="android.intent.action.VIEW"
+				android:targetPackage="fr.s13d.photobackup"
+        		android:targetClass="fr.s13d.photobackup.journal.JournalActivity"/>
+		</Preference>
+
+    </PreferenceCategory>
+    
 
     <PreferenceCategory
         android:title="@string/device_conf"

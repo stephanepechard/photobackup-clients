@@ -19,8 +19,14 @@
 package fr.s13d.photobackup;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.SocketTimeoutException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.mime.HttpMultipartMode;
@@ -28,6 +34,9 @@ import org.apache.http.entity.mime.MultipartEntity;
 import org.apache.http.entity.mime.content.FileBody;
 import org.apache.http.entity.mime.content.StringBody;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -40,17 +49,21 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import fr.s13d.photobackup.journal.JournalEntriesDataSource;
+
 
 public class PhotoBackupService extends Service {
 
 	private static final String TAG = "PhotoBackupService";
 	private FileObserver observer = null;
-
+	private final JournalEntriesDataSource datasource;
 
 	/**
 	 * Constructor of the PhotoBackupService
 	 */
-	public PhotoBackupService() {}
+	public PhotoBackupService() {
+		datasource = new JournalEntriesDataSource(this);
+	}
 
 
 	private void createObserver(final String path) {
@@ -58,11 +71,12 @@ public class PhotoBackupService extends Service {
 		observer = new FileObserver(path) {
 			@Override
 			public void onEvent(final int event, final String file) {
-				// check if its a "create" and not equal to .probe because
-				// that's created every time camera is launched
-				if ((event == FileObserver.CREATE) && !file.equals(".probe")) {
-					Log.v(TAG, "File created [" + path + "/" + file + "]");
+				// Check if its a "create" and not equal to .probe because
+				// that's created every time camera is launched or *.tmp
+				// because that's created for each picture.
+				if ((event == FileObserver.CREATE) && !file.equals(".probe") && !file.endsWith(".tmp")) {
 					try {
+						Log.v(TAG, "File created [" + path + "/" + file + "]");
 						postPhoto(path + "/" + file);
 					} catch (Exception e) {
 						createNotification("Error", "onEvent: catch");
@@ -110,7 +124,7 @@ public class PhotoBackupService extends Service {
 	}
 
 
-	public void postPhoto(final String path) throws Exception {
+	public void postPhoto(final String path) {
 		// get the user preferences
 		SharedPreferences sharedPreferences = PreferenceManager
 				.getDefaultSharedPreferences(this);
@@ -119,27 +133,48 @@ public class PhotoBackupService extends Service {
 				"pref_server_password_hash", "");
 
 		// create a new HttpClient
-		HttpClient httpclient = new DefaultHttpClient();
-		HttpPost httppost = new HttpPost(server_url);
+		int timeout = 5000; // in milliseconds
+		HttpParams httpParams = new BasicHttpParams();
+		HttpConnectionParams.setConnectionTimeout(httpParams, timeout);
+		HttpConnectionParams.setSoTimeout(httpParams, timeout);
+		HttpClient httpClient = new DefaultHttpClient(httpParams);
+		HttpPost httpPost = new HttpPost(server_url);
 
 		// create the request
-		MultipartEntity entity = new MultipartEntity(
-				HttpMultipartMode.BROWSER_COMPATIBLE);
+		MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 		File upfile = new File(path);
+		long uploaded = 0;
 		try {
 			entity.addPart("server_pass", new StringBody(server_hash));
 			entity.addPart("upfile", new FileBody(upfile));
-			httppost.setEntity(entity);
-			HttpResponse response = httpclient.execute(httppost);
-			int status = response.getStatusLine().getStatusCode();
+			httpPost.setEntity(entity);
+			HttpResponse response = httpClient.execute(httpPost);
+			if (response != null) {
+				int status = response.getStatusLine().getStatusCode();
+				Log.v(TAG, "response: " + status);
 
-			System.out.println("Response: " + status);
-
-			// TODO: if not 200 => failure notification
-
-		} catch (Exception e) {
-			entity.addPart("upfile", new StringBody(""));
+				if (status == 200) { // success
+					uploaded = 1;
+				} else {
+					createNotification(getResources().getString(R.string.error_uploadfailed),
+							getResources().getString(R.string.error_not200) + " (" + status + ")");
+				}
+			}
+		} catch (SocketTimeoutException e) {
+			createNotification(getResources().getString(R.string.error_uploadfailed),
+					getResources().getString(R.string.error_timeout));
+		} catch (ClientProtocolException e) {
+			createNotification(getResources().getString(R.string.error_uploadfailed),
+					getResources().getString(R.string.error_protocol));
+		} catch (IOException e) {
+			createNotification(getResources().getString(R.string.error_uploadfailed),
+					getResources().getString(R.string.error_noresponse));
 		}
+
+		// Add it to the journal
+		datasource.open();
+		datasource.createEntry(now(), upfile.getName(), uploaded);
+		datasource.close();
 	}
 
 
@@ -149,6 +184,14 @@ public class PhotoBackupService extends Service {
 			observer.stopWatching();
 		}
 		Log.v(TAG, "FileObserver stopped");
+	}
+
+
+	private static final String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
+	private static String now() {
+		Calendar cal = Calendar.getInstance();
+		SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW, Locale.FRANCE);
+		return sdf.format(cal.getTime());
 	}
 
 

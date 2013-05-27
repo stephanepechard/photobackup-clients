@@ -15,6 +15,10 @@
     <string name="server_password_title">Server password</string>
     <string name="server_password_summary">The password of the server.</string>
 
+    <string name="info_conf">Informations</string>
+    
+    <string name="journal_title">Upload journal</string>
+    
     <string name="device_conf">Device configuration</string>
 
     <string name="only_wifi_title">Network use</string>
@@ -22,5 +26,12 @@
     <string name="not_only_wifi">Backup on wifi and data network</string>
 
     <string name="toast_urisyntaxexception">The given address is invalid!</string>
+    
     <string name="error_nopicturedirectory">The application couldn\'t find your pictures!\nSorry :-(</string>
+    <string name="error_uploadfailed">Upload failed</string>
+    <string name="error_not200">Bad server response!</string>
+    <string name="error_timeout">Server took too long to respond!</string>
+    <string name="error_noresponse">Server seems asleep&#8230;</string>
+    <string name="error_protocol">Transmission error&#8230;</string>
+
 </resources>
