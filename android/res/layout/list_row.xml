@@ -1,36 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/list_image"
     android:layout_width="fill_parent"
-    android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:padding="5dip" >
+    android:layout_height="fill_parent"
+    android:padding="4dip" >
+
+    <!-- Thumbnail image on the left -->
+    <ImageView
+        android:id="@+id/thumbnail"
+        android:layout_width="50dip"
+        android:layout_height="50dip"
+        android:layout_centerVertical="true"
+        android:contentDescription="@string/thumbnail_description"
+        android:src="@drawable/ic_launcher" />
     
-<!--  ListRow Left sied Thumbnail image -->
-    <LinearLayout android:id="@+id/thumbnail"
+    <ImageView
+        android:id="@+id/error"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:padding="3dip"
-        android:layout_alignParentLeft="true"
-        android:layout_marginRight="5dip">
- 
-        <ImageView
-            android:id="@+id/list_image"
-            android:layout_width="50dip"
-            android:layout_height="50dip"
-            android:src="@drawable/ic_launcher"
-            android:contentDescription="@string/thumbnail_description" />
- 
-    </LinearLayout>
+        android:layout_centerVertical="true"
+        android:layout_alignParentEnd="true"
+        android:contentDescription="@string/thumbnail_description"
+        android:src="@drawable/alerts_and_states_error" />
 
     <TextView
         android:id="@+id/filename"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignTop="@+id/thumbnail"
-        android:layout_toRightOf="@+id/thumbnail"
-        android:textColor="#040404"
-        android:typeface="sans"
-        android:textSize="15sp"
-        android:textStyle="bold"/>
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="8dip"
+        android:layout_marginRight="8dip"
+        android:layout_toLeftOf="@id/error"
+        android:layout_toRightOf="@id/thumbnail"
+        android:textAppearance="@android:style/TextAppearance.Small" />
 
 </RelativeLayout>

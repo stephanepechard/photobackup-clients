@@ -71,12 +71,13 @@ public class PhotoBackupService extends Service {
 		observer = new FileObserver(path) {
 			@Override
 			public void onEvent(final int event, final String file) {
-				// Check if its a "create" and not equal to .probe because
-				// that's created every time camera is launched or *.tmp
-				// because that's created for each picture.
-				if ((event == FileObserver.CREATE) && !file.equals(".probe") && !file.endsWith(".tmp")) {
+				// Check if it's a CLOSE_WRITE event and not equal
+				// to .probe because that's created every time camera
+				// is launched or *.tmp because that's created for each picture.
+				// Don't use CREATE as it is not finish to write when you get the event.
+				if ((event == FileObserver.CLOSE_WRITE) && !file.equals(".probe") && !file.endsWith(".tmp")) {
 					try {
-						Log.v(TAG, "File created [" + path + "/" + file + "]");
+						Log.v(TAG, "File written [" + path + "/" + file + "]");
 						postPhoto(path + "/" + file);
 					} catch (Exception e) {
 						createNotification("Error", "onEvent: catch");

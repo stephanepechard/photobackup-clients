@@ -50,17 +50,25 @@ public class JournalAdapter extends BaseAdapter {
 			vi = inflater.inflate(R.layout.list_row, null);
 		}
 
-		// picture
-		ImageView thumbImage = (ImageView)vi.findViewById(R.id.list_image);
+		// thumbnail
+		ImageView thumbImageView = (ImageView)vi.findViewById(R.id.thumbnail);
 		JournalEntry entry = values.get(position);
 		Bitmap fullResolutionPicture = BitmapFactory.decodeFile(entry.getFilename());
 		Bitmap thumbnailPicture = ThumbnailUtils.extractThumbnail(fullResolutionPicture, 180, 180);
-		thumbImage.setImageBitmap(thumbnailPicture);
+		thumbImageView.setImageBitmap(thumbnailPicture);
 
 		// filename
 		TextView textView = (TextView)vi.findViewById(R.id.filename);
 		File file = new File(entry.getFilename());
 		textView.setText(file.getName());
+
+		// error
+		ImageView errorImageView = (ImageView)vi.findViewById(R.id.error);
+		if (entry.getUploaded() == 1) {
+			errorImageView.setVisibility(View.INVISIBLE);
+		} else {
+			errorImageView.setVisibility(View.VISIBLE);
+		}
 
 		return vi;
 	}
