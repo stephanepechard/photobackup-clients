@@ -18,11 +18,7 @@ public class JournalActivity extends ListActivity {
 		datasource.open();
 
 		List<JournalEntry> values = datasource.getAllEntries();
-
-		// Use the SimpleCursorAdapter to show the elements in a ListView
-		//		ArrayAdapter<JournalEntry> adapter = new ArrayAdapter<JournalEntry>(this,
-		//				android.R.layout.simple_list_item_1, values);
-		JournalAdapter adapter = new JournalAdapter(this, values);
+		JournalAdapter adapter = new JournalAdapter(this, values, getResources());
 		setListAdapter(adapter);
 	}
 

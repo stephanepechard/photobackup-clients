@@ -14,6 +14,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup.LayoutParams;
 import android.webkit.URLUtil;
@@ -49,6 +50,7 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 			// Display the settings fragment as the main content.
 			settingsFragment = new SettingsFragment();
 			getFragmentManager().beginTransaction().replace(android.R.id.content, settingsFragment).commit();
+
 		} else {
 			// show an error text view
 			setContentView(R.layout.activity_config);
@@ -62,24 +64,50 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 			lp.addRule(RelativeLayout.CENTER_VERTICAL);
 			rl.addView(errorTextView, lp);
 		}
-
-		// Init the preferences
-		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-		Editor editor = sharedPreferences.edit();
-		editor.putBoolean(PREF_KEY_SERVICE_RUNNING, isPhotoBackupServiceRunning());
-		// others
-		// EditTextPreference textPreference = (EditTextPreference)
-		// settingsFragment.findPreference(PREF_KEY_SERVER_URL);
-		// textPreference.setSummary(sharedPreferences.getString(PREF_KEY_SERVER_URL,
-		// ""));
-		editor.commit();
 	}
+
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+		setPreferences();
+	}
+
+
+	private void setPreferences() {
+		// Init the preferences
+		if (settingsFragment != null) {
+			SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+			Editor editor = sharedPreferences.edit();
+			// service switch
+			editor.putBoolean(PREF_KEY_SERVICE_RUNNING, isPhotoBackupServiceRunning());
+			// server url
+			String serverUrlSummary = sharedPreferences.getString(PREF_KEY_SERVER_URL, "");
+			EditTextPreference serverUrlTextPreference = (EditTextPreference) settingsFragment.findPreference(PREF_KEY_SERVER_URL);
+			if (!serverUrlSummary.isEmpty()) {
+				serverUrlTextPreference.setSummary(serverUrlSummary);
+			} else {
+				serverUrlTextPreference.setSummary(getResources().getString(R.string.server_url_summary));
+			}
+			// server password
+			/*String serverPassHash = sharedPreferences.getString(PREF_KEY_SERVER_PASS_HASH, "");
+			EditTextPreference textPreference = (EditTextPreference) settingsFragment.findPreference(PREF_KEY_SERVER_PASS);
+			if (!serverPassHash.isEmpty()) {
+				String set = getResources().getString(R.string.server_password_set);
+				textPreference.setSummary(set);
+			}*/
+
+			editor.commit();
+		}
+	}
+
 
 	@Override
 	protected void onResume() {
 		super.onResume();
 		PreferenceManager.getDefaultSharedPreferences(this).registerOnSharedPreferenceChangeListener(this);
 	}
+
 
 	@Override
 	protected void onPause() {
@@ -90,12 +118,12 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 
 	@Override
 	public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
+		Log.v("ConfigActivity", "onSharedPreferenceChanged for: " + key);
+
+		// TODO: settings validation
 
 		if (key.equals(PREF_KEY_SERVICE_RUNNING)) {
 			// Start/Stop the service
-
-			// TODO: settings validation
-
 			if (sharedPreferences.getBoolean(PREF_KEY_SERVICE_RUNNING, false)) {
 				startService(serviceIntent);
 			} else {
@@ -116,8 +144,6 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 			if (summary.isEmpty() || !urlIsValid) {
 				summary = getResources().getString(R.string.server_url_summary);
 			}
-
-			// set the summary
 			EditTextPreference textPreference = (EditTextPreference) settingsFragment.findPreference(PREF_KEY_SERVER_URL);
 			textPreference.setSummary(summary);
 
