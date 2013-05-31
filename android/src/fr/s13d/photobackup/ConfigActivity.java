@@ -14,6 +14,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.PreferenceManager;
+import android.preference.SwitchPreference;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup.LayoutParams;
@@ -21,6 +22,8 @@ import android.webkit.URLUtil;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.crashlytics.android.Crashlytics;
 
 public class ConfigActivity extends Activity implements OnSharedPreferenceChangeListener {
 
@@ -41,6 +44,7 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		Crashlytics.start(this);
 		String pictureDirectory = StorageManager.getPictureDirectory(this);
 		if (!pictureDirectory.isEmpty()) {
 			// the main service
@@ -124,28 +128,41 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 
 		if (key.equals(PREF_KEY_SERVICE_RUNNING)) {
 			// Start/Stop the service
+
 			if (sharedPreferences.getBoolean(PREF_KEY_SERVICE_RUNNING, false)) {
-				startService(serviceIntent);
+				if (validateSettings() == true) {
+					startService(serviceIntent);
+				} else {
+					//					Editor editor = sharedPreferences.edit();
+					//					editor.putBoolean(PREF_KEY_SERVICE_RUNNING, false);
+					//					editor.commit();
+
+					SwitchPreference switchPreference = (SwitchPreference) settingsFragment.findPreference(PREF_KEY_SERVICE_RUNNING);
+					switchPreference.setChecked(false);
+
+				}
 			} else {
-				stopService(serviceIntent);
+				if (isPhotoBackupServiceRunning()) {
+					stopService(serviceIntent);
+				}
 			}
 
 		} else if (key.equals(PREF_KEY_SERVER_URL)) {
 			// Change the summary to the server URL if it is valid
-			String summary = sharedPreferences.getString(PREF_KEY_SERVER_URL, "");
+			String serverUrl = sharedPreferences.getString(PREF_KEY_SERVER_URL, "");
 
 			// Validate URL
 			Boolean urlIsValid = true;
-			if (!URLUtil.isValidUrl(summary)) {
+			if (!URLUtil.isValidUrl(serverUrl)) {
 				Toast.makeText(this, R.string.toast_urisyntaxexception, Toast.LENGTH_SHORT).show();
 				urlIsValid = false;
 			}
 
-			if (summary.isEmpty() || !urlIsValid) {
-				summary = getResources().getString(R.string.server_url_summary);
+			if (serverUrl.isEmpty() || !urlIsValid) {
+				serverUrl = getResources().getString(R.string.server_url_summary);
 			}
 			EditTextPreference textPreference = (EditTextPreference) settingsFragment.findPreference(PREF_KEY_SERVER_URL);
-			textPreference.setSummary(summary);
+			textPreference.setSummary(serverUrl);
 
 		} else if (key.equals(PREF_KEY_SERVER_PASS)) {
 			// store only the hash of the password in the preferences
@@ -194,6 +211,21 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 
 			// TODO: implement
 		}
+	}
+
+	private boolean validateSettings() {
+		boolean settingsValidated = true;
+		SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+		String serverUrl = sharedPreferences.getString(PREF_KEY_SERVER_URL, "");
+		if (!URLUtil.isValidUrl(serverUrl) || serverUrl.isEmpty()) {
+			Toast.makeText(this, R.string.toast_urisyntaxexception, Toast.LENGTH_SHORT).show();
+			settingsValidated = false;
+		}
+
+
+
+		return settingsValidated;
 	}
 
 	/**
