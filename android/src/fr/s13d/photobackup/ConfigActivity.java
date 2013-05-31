@@ -133,13 +133,8 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 				if (validateSettings() == true) {
 					startService(serviceIntent);
 				} else {
-					//					Editor editor = sharedPreferences.edit();
-					//					editor.putBoolean(PREF_KEY_SERVICE_RUNNING, false);
-					//					editor.commit();
-
 					SwitchPreference switchPreference = (SwitchPreference) settingsFragment.findPreference(PREF_KEY_SERVICE_RUNNING);
 					switchPreference.setChecked(false);
-
 				}
 			} else {
 				if (isPhotoBackupServiceRunning()) {
