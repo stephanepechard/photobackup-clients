@@ -11,10 +11,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
+import android.provider.BaseColumns;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.ViewGroup.LayoutParams;
@@ -43,6 +46,28 @@ public class ConfigActivity extends Activity implements OnSharedPreferenceChange
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		// Query the media store to find the last picture taken by the user
+		String[] projection = new String[]{BaseColumns._ID};/*,
+				MediaColumns.DATA,
+				MediaStore.Images.ImageColumns.BUCKET_DISPLAY_NAME,
+				MediaStore.Images.ImageColumns.DATE_TAKEN,
+				MediaColumns.MIME_TYPE
+		};*/
+
+		// The most probable is to keep pictures on the internal storage, right?
+		final Cursor cursor = getContentResolver().
+				query(MediaStore.Images.Thumbnails.INTERNAL_CONTENT_URI, projection, null, null, null);
+
+
+		//		String[] projection = {BaseColumns._ID};
+		//		Cursor cursor = managedQuery( MediaStore.Images.Thumbnails.INTERNAL_CONTENT_URI,
+		//				projection,
+		//				null,
+		//				null,
+		//				MediaStore.Images.Thumbnails.IMAGE_ID);
+		Log.v("ConfigActivity","There are " + cursor.getCount() + " items");
+
 
 		Crashlytics.start(this);
 		String pictureDirectory = StorageManager.getPictureDirectory(this);
