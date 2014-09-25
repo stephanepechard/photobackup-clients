@@ -27,14 +27,13 @@ import android.preference.PreferenceFragment;
 public class SettingsFragment extends PreferenceFragment {
 
 	// empty constructor
-	public SettingsFragment() {
-	}
+	/*public SettingsFragment() {
+        addPreferencesFromResource(R.xml.preferences);
+	}*/
 
 	@Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-
-		// Load the preferences from an XML resource
 		addPreferencesFromResource(R.xml.preferences);
 	}
 

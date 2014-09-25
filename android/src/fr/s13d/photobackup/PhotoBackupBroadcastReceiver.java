@@ -27,8 +27,7 @@ public class PhotoBackupBroadcastReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(final Context context, final Intent intent) {
-		Intent startServiceIntent = new Intent(context,
-				PhotoBackupService.class);
+		Intent startServiceIntent = new Intent(context, PhotoBackupService.class);
 		context.startService(startServiceIntent);
 	}
 
