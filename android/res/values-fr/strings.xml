@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">PhotoBackup</string>
+
+    <string name="service_title">Service</string>
+    <string name="service_state_running">Le service est actif.</string>
+    <string name="service_state_not_running">Le service est inactif.</string>
+
+    <string name="server_conf">Configuration du serveur</string>
+
+    <string name="server_url_title">Adresse</string>
+    <string name="server_url_summary">L'adresse du serveur où sont envoyées vos photos.</string>
+
+    <string name="server_password_title">Mot de passe</string>
+    <string name="server_password_summary">Le mot de passe du serveur.</string>
+    <string name="server_password_summary_set">Le mot de passe est renseigné.</string>
+
+    <string name="info_conf">Informations</string>
+    
+    <string name="journal_title">Journal d'envoi</string>
+    
+    <string name="device_conf">Configuration de l'appareil</string>
+
+    <string name="only_wifi_title">Usage réseau</string>
+    <string name="only_wifi">Sauvegarde sur wifi uniquement</string>
+    <string name="not_only_wifi">Sauvegarde sur wifi et data</string>
+
+    <string name="toast_urisyntaxexception">L'adresse est invalide !</string>
+    <string name="toast_serverpassempty">Le mot de passe ne peut pas être vide !</string>
+    
+    <string name="error_nopicturedirectory">Je n'ai pas trouvé vos photos.\nDésolé :-(</string>
+    <string name="error_uploadfailed">L'envoi a échoué</string>
+    <string name="error_not200">Le serveur a renvoyé un erreur !</string>
+    <string name="error_timeout">Le serveur n'a pas répondu à temps !</string>
+    <string name="error_noresponse">Le serveur ne répond pas&#8230;</string>
+    <string name="error_protocol">Erreur de transmission&#8230;</string>
+
+    <string name="thumbnail_description">Vignette de l'image</string>
+
+</resources>
