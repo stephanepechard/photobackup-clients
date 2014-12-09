@@ -1,54 +1,88 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import argparse
+"""PhotoBackup
+
+Usage:
+  photobackup.py upload <url> <image>
+  photobackup.py test <url>
+  photobackup.py (-h | --help)
+  photobackup.py --version
+
+Options:
+  -h --help     Show this screen.
+  --version     Show version.
+"""
+
+# stdlib
 import getpass
 import hashlib
-import requests
 import sys
+import urllib.parse
+# pipped
+from docopt import docopt
+import requests
 from blessings import Terminal
+term = Terminal()
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("url", help="The address of your server.", type=str)
-    parser.add_argument("image", help="The image to be sent.",
-                                 type=argparse.FileType('rb'))
-    return parser.parse_args()
+def password():
+    """ Ask the password of the server. """
+    password = getpass.getpass(prompt='The server password: ')
+    return { 'server_pass':
+             hashlib.sha512(password.encode('utf-8')).hexdigest() }
 
 
-def main():
-    parsed_args = parse_args()
-    if parsed_args:
-        args = vars(parsed_args)
-        upfile = { 'upfile': args['image'] }
-        term = Terminal()
+def response(status_code):
+    if status_code == 200:
+        print(term.green + "Request was successful!")
+    elif status_code == 403:
+        print(term.red + "ERROR: wrong password!")
+    elif status_code == 404:
+        print(term.red + "ERROR: unknown address!")
+    elif status_code == 405:
+        print(term.red + "ERROR: the server does not know this url!")        
+    elif status_code == 408:
+        print(term.red + "ERROR: request took too long!")
+    elif status_code == 500:
+        print(term.red + "ERROR: server made a booboo!")
+    else:
+        print(term.red + "ERROR: request failed ({})!".format(status_code))
 
-        # ask the password of the server
-        password = getpass.getpass(prompt='The server password: ')
-        payload = { 'server_pass':
-                    hashlib.sha512(password.encode('utf-8')).hexdigest() }
 
-        # send the request
-        try:
-            request = requests.post(args['url'], files=upfile, data=payload)
-        except requests.exceptions.MissingSchema:
-            sys.exit(term.red + "ERROR: invalid URL: {}".format(args['url']))
-        except requests.exceptions.ConnectionError:
-            sys.exit(term.red + "ERROR: Connection refused")
+def upload(url, image):
+    upfile = { 'upfile': image }
 
-        # manage the response
-        if request.status_code == 200:
-            print(term.green + "Upload was successful!")
-        elif request.status_code == 403:
-            print(term.red + "ERROR: Wrong password!")
-        elif request.status_code == 408:
-            print(term.red + "ERROR: Request took too long!")
-        elif request.status_code == 500:
-            print(term.red + "ERROR: Server made a booboo!")
-        else:
-            print(term.red + "ERROR: Upload failed!")
+    try:
+        request = requests.post(url, files=upfile, data=password())
+    except requests.exceptions.MissingSchema:
+        sys.exit(term.red + "ERROR: invalid URL: {}".format(url))
+    except requests.exceptions.ConnectionError:
+        sys.exit(term.red + "ERROR: Connection refused")
+
+    response(request.status_code)
+
+
+def test(url):
+    test_url = urllib.parse.urljoin(url, '/test')
+    
+    try:
+        request = requests.post(test_url, data=password())
+    except requests.exceptions.MissingSchema:
+        sys.exit(term.red + "ERROR: invalid URL: {}".format(url))
+    except requests.exceptions.ConnectionError:
+        sys.exit(term.red + "ERROR: Connection refused")
+
+    response(request.status_code)
+
+
+def main(args):
+    if args['upload']:
+        upload(args['<url>'], args['<image>'])
+    elif args['test']:
+        test(args['<url>'])
 
 
 if __name__ == '__main__':
-    main()
+    arguments = docopt(__doc__, version='PhotoBackup Python CLI client, v1.0')
+    main(arguments)
