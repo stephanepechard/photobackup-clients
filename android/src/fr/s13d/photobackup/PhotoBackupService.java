@@ -25,9 +25,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
+import android.provider.MediaStore.MediaColumns;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
@@ -84,10 +87,16 @@ public class PhotoBackupService extends Service {
         @Override
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
-            /*Media media = readFromMediaStore(getApplicationContext(),
+            PhotoBackupPicture picture = readFromMediaStore(getApplicationContext(),
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            saved = "I detected " + media.file.getName();*/
-            Log.d(LOG_TAG, "onChange: detected picture");
+            Log.d(LOG_TAG, "detected picture: " + picture.toString());
+
+            try {
+                addPhotoToQueue(picture.getFile().getAbsolutePath());
+            }
+            catch (Exception e) {
+                PhotoBackupService.this.notify("Error", "onEvent" + e.toString());
+            }
         }
     }
 
@@ -145,8 +154,8 @@ public class PhotoBackupService extends Service {
 
 	private void postPhoto(final String path) {
 		// get the user preferences
-		String server_url = sharedPreferences.getString(PhotoBackupActivity.PREF_SERVER_URL, "");
-		String server_hash = sharedPreferences.getString(PhotoBackupActivity.PREF_SERVER_PASS_HASH, "");
+		String serverUrl = sharedPreferences.getString(PhotoBackupActivity.PREF_SERVER_URL, "");
+		String serverHash = sharedPreferences.getString(PhotoBackupActivity.PREF_SERVER_PASS_HASH, "");
 
 		// create a new HttpClient
 		int timeout = 5000; // in milliseconds
@@ -154,14 +163,14 @@ public class PhotoBackupService extends Service {
 		HttpConnectionParams.setConnectionTimeout(httpParams, timeout);
 		HttpConnectionParams.setSoTimeout(httpParams, timeout);
 		HttpClient httpClient = new DefaultHttpClient(httpParams);
-		HttpPost httpPost = new HttpPost(server_url);
+		HttpPost httpPost = new HttpPost(serverUrl);
 
 		// create the request
 		MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
 		File upfile = new File(path);
 		long uploaded = 0;
 		try {
-			entity.addPart("server_pass", new StringBody(server_hash));
+			entity.addPart("server_pass", new StringBody(serverHash));
 			entity.addPart("upfile", new FileBody(upfile));
 			httpPost.setEntity(entity);
 			HttpResponse response = httpClient.execute(httpPost);
@@ -202,6 +211,21 @@ public class PhotoBackupService extends Service {
 		return sdf.format(cal.getTime());
 	}
 
+
+    private PhotoBackupPicture readFromMediaStore(Context context, Uri uri) {
+        Cursor cursor = context.getContentResolver().query(
+                uri, null, null, null, "date_added DESC");
+        PhotoBackupPicture picture = null;
+        if (cursor.moveToNext()) {
+            int dataColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATA);
+            String filePath = cursor.getString(dataColumn);
+            //int mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE);
+            //String mimeType = cursor.getString(mimeTypeColumn);
+            picture = new PhotoBackupPicture(new File(filePath));
+        }
+        cursor.close();
+        return picture;
+    }
 
 	@Override
 	public IBinder onBind(final Intent intent) {

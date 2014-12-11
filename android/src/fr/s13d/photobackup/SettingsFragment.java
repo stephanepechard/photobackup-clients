@@ -21,9 +21,6 @@ package fr.s13d.photobackup;
 import android.os.Bundle;
 import android.preference.PreferenceFragment;
 
-/**
- *
- */
 public class SettingsFragment extends PreferenceFragment {
 
 	@Override
