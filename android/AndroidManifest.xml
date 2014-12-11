@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="fr.s13d.photobackup"
-    android:versionCode="2"
-    android:versionName="0.1" >
-
-    <uses-sdk
-        android:minSdkVersion="14"
-        android:targetSdkVersion="20" />
+    package="fr.s13d.photobackup" >
 
  	<uses-permission android:name="android.permission.INTERNET" />
  	<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
@@ -37,13 +31,22 @@
 		<service android:name="fr.s13d.photobackup.PhotoBackupService" android:exported="false" />
 
 		<!-- Declaring broadcast receiver for BOOT_COMPLETED event -->
-    	<receiver android:name="fr.s13d.photobackup.PhotoBackupBroadcastReceiver">
+    	<receiver android:name=".PhotoBackupBootBroadcastReceiver">
 	    	<intent-filter>
         		<action android:name="android.intent.action.BOOT_COMPLETED" />
     		</intent-filter>
 		</receiver>
+
+        <!-- Crashlytics config-->
         <meta-data android:name="com.crashlytics.ApiKey" android:value="f438f3c329e7f060aab30c701f31d5847a694769"/>
-        
+
+        <!-- SugarORM config-->
+        <meta-data android:name="DATABASE" android:value="photobackup.db" />
+        <meta-data android:name="VERSION" android:value="1" />
+        <meta-data android:name="QUERY_LOG" android:value="true" />
+        <meta-data android:name="DOMAIN_PACKAGE_NAME" android:value="fr.s13d.photobackup" />
+
     </application>
+
 
 </manifest>

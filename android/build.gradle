@@ -4,26 +4,28 @@ buildscript {
         maven { url 'http://download.crashlytics.com/maven' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:0.12.+'
+        classpath 'com.android.tools.build:gradle:1.0.0'
         classpath 'com.crashlytics.tools.gradle:crashlytics-gradle:1.+'
     }
 }
-apply plugin: 'android'
+apply plugin: 'com.android.application'
 apply plugin: 'crashlytics'
 
 repositories {
+    mavenCentral()
     maven { url 'http://download.crashlytics.com/maven' }
 }
 
-
-dependencies {
-    compile fileTree(dir: 'libs', include: '*.jar')
-    compile 'com.crashlytics.android:crashlytics:1.+'
-}
-
 android {
-    compileSdkVersion 19
+    compileSdkVersion 21
     buildToolsVersion "20.0.0"
+
+    defaultConfig {
+        minSdkVersion 14
+        targetSdkVersion 21
+        versionCode 3
+        versionName "0.1"
+    }
 
     sourceSets {
         main {
@@ -53,4 +55,15 @@ android {
         exclude 'META-INF/LICENSE.txt'
         exclude 'META-INF/NOTICE.txt'
     }
+
+    lintOptions {
+        abortOnError false
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: '*.jar')
+//    compile "com.android.support:appcompat-v7:21.0.+"
+    compile 'com.crashlytics.android:crashlytics:1.+'
+    compile 'com.github.satyan:sugar:1.3'
 }

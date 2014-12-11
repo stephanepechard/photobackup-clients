@@ -1,4 +1,4 @@
-package fr.s13d.photobackup.journal;
+/*package fr.s13d.photobackup.journal;
 
 import java.io.File;
 import java.util.List;
@@ -13,15 +13,17 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import fr.s13d.photobackup.PhotobackupPicture;
 import fr.s13d.photobackup.R;
 
 public class JournalAdapter extends BaseAdapter {
 	private final Activity activity;
-	private final List<JournalEntry> values;
+	private final List<PhotobackupPicture> values;
 	private static LayoutInflater inflater=null;
 	private Resources resources = null;
 
-	public JournalAdapter(Activity newActivity, List<JournalEntry> newValues, Resources newResources) {
+	public JournalAdapter(Activity newActivity, List<PhotobackupPicture> newValues, Resources newResources) {
 		activity = newActivity;
 		values = newValues;
 		resources = newResources;
@@ -49,7 +51,7 @@ public class JournalAdapter extends BaseAdapter {
 		if(view == null) {
 			view = inflater.inflate(R.layout.list_row, null);
 		}
-		JournalEntry entry = values.get(position);
+		PhotobackupPicture entry = values.get(position);
 
 		// thumbnail
 		ImageView thumbImageView = (ImageView)view.findViewById(R.id.thumbnail);
@@ -78,3 +80,4 @@ public class JournalAdapter extends BaseAdapter {
 	}
 
 }
+*/

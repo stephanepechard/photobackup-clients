@@ -1,4 +1,4 @@
-package fr.s13d.photobackup.journal;
+/*package fr.s13d.photobackup.journal;
 
 import java.lang.ref.WeakReference;
 
@@ -12,13 +12,15 @@ import android.os.AsyncTask;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+
+import fr.s13d.photobackup.PhotobackupPicture;
 import fr.s13d.photobackup.R;
 
-class BitmapWorkerTask extends AsyncTask<JournalEntry, Void, Bitmap> {
+class BitmapWorkerTask extends AsyncTask<PhotobackupPicture, Void, Bitmap> {
 	private final WeakReference<ImageView> imageViewReference;
 	private Resources resources = null;
 	private ProgressBar progressBar = null;
-	public JournalEntry entry = null;
+	public PhotobackupPicture entry = null;
 
 	public BitmapWorkerTask(ImageView imageView, Resources newResources, View view) {
 		// Use a WeakReference to ensure the ImageView can be garbage collected
@@ -30,7 +32,7 @@ class BitmapWorkerTask extends AsyncTask<JournalEntry, Void, Bitmap> {
 
 	// Decode image in background.
 	@Override
-	protected Bitmap doInBackground(JournalEntry... params) {
+	protected Bitmap doInBackground(PhotobackupPicture... params) {
 		entry = params[0];
 		Bitmap fullResolutionPicture = BitmapFactory.decodeFile(entry.getFilename());
 		Bitmap thumbnailPicture = null;
@@ -73,11 +75,11 @@ class BitmapWorkerTask extends AsyncTask<JournalEntry, Void, Bitmap> {
 	}
 
 
-	public static boolean cancelPotentialWork(JournalEntry entry, ImageView imageView) {
+	public static boolean cancelPotentialWork(PhotobackupPicture entry, ImageView imageView) {
 		final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
 
 		if (bitmapWorkerTask != null) {
-			final JournalEntry bitmapData = bitmapWorkerTask.entry;
+			final PhotobackupPicture bitmapData = bitmapWorkerTask.entry;
 			if (bitmapData != entry) {
 				// Cancel previous task
 				bitmapWorkerTask.cancel(true);
@@ -104,3 +106,4 @@ final class AsyncDrawable extends BitmapDrawable {
 		return bitmapWorkerTaskReference.get();
 	}
 }
+*/

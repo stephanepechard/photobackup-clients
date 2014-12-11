@@ -32,33 +32,32 @@
 
     </PreferenceCategory>
 
+    <!--
+        <PreferenceCategory
+            android:title="@string/info_conf"
+            android:key="info_conf">
 
-    <PreferenceCategory
-        android:title="@string/info_conf"
-        android:key="info_conf">
+            <Preference android:title="@string/journal_title" >
+                <intent
+                    android:action="android.intent.action.VIEW"
+                    android:targetPackage="fr.s13d.photobackup"
+                    android:targetClass="fr.s13d.photobackup.journal.JournalActivity"/>
+            </Preference>
 
-        <Preference android:title="@string/journal_title" >
-			<intent
-			    android:action="android.intent.action.VIEW"
-				android:targetPackage="fr.s13d.photobackup"
-        		android:targetClass="fr.s13d.photobackup.journal.JournalActivity"/>
-		</Preference>
+        </PreferenceCategory>
 
-    </PreferenceCategory>
-    
-<!-- 
-    <PreferenceCategory
-        android:title="@string/device_conf"
-        android:key="device_conf">
+        <PreferenceCategory
+            android:title="@string/device_conf"
+            android:key="device_conf">
 
-    	<CheckBoxPreference
-        	android:key="pref_only_wifi"
-        	android:title="@string/only_wifi_title"
-        	android:summaryOn="@string/only_wifi"
-        	android:summaryOff="@string/not_only_wifi"
-        	android:defaultValue="false"
-        	android:dependency="PREF_SERVICE_RUNNING" />
+            <CheckBoxPreference
+                android:key="pref_only_wifi"
+                android:title="@string/only_wifi_title"
+                android:summaryOn="@string/only_wifi"
+                android:summaryOff="@string/not_only_wifi"
+                android:defaultValue="false"
+                android:dependency="PREF_SERVICE_RUNNING" />
 
-    </PreferenceCategory> -->
+        </PreferenceCategory> -->
     
 </PreferenceScreen>

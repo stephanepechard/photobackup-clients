@@ -1,4 +1,4 @@
-package fr.s13d.photobackup.journal;
+/*package fr.s13d.photobackup.journal;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -9,6 +9,8 @@ import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import fr.s13d.photobackup.PhotobackupPicture;
 
 public class JournalEntriesDataSource {
 	private static final String TAG = "JournalEntriesDataSource";
@@ -34,7 +36,7 @@ public class JournalEntriesDataSource {
 		dbHelper.close();
 	}
 
-	public JournalEntry createEntry(String date, String filename, long uploaded) {
+	public PhotobackupPicture createEntry(String date, String filename, long uploaded) {
 		ContentValues values = new ContentValues();
 		values.put(JournalEntryOpenHelper.COLUMN_DATE, date);
 		values.put(JournalEntryOpenHelper.COLUMN_FILENAME, filename);
@@ -45,28 +47,28 @@ public class JournalEntriesDataSource {
 				allColumns, JournalEntryOpenHelper.COLUMN_ID + " = " + insertId,
 				null, null, null, null);
 		cursor.moveToFirst();
-		JournalEntry newEntry = cursorToEntry(cursor);
+		PhotobackupPicture newEntry = cursorToEntry(cursor);
 		cursor.close();
 		Log.v(TAG, "new entry: " + newEntry.toString());
 		return newEntry;
 	}
 
-	public void deleteEntry(JournalEntry entry) {
+	public void deleteEntry(PhotobackupPicture entry) {
 		long id = entry.getId();
 		Log.v(TAG, "Deleted id: " + id);
 		database.delete(JournalEntryOpenHelper.TABLE_ENTRIES,
 				JournalEntryOpenHelper.COLUMN_ID + " = " + id, null);
 	}
 
-	public List<JournalEntry> getAllEntries() {
-		List<JournalEntry> entries = new ArrayList<JournalEntry>();
+	public List<PhotobackupPicture> getAllEntries() {
+		List<PhotobackupPicture> entries = new ArrayList<PhotobackupPicture>();
 
 		Cursor cursor = database.query(JournalEntryOpenHelper.TABLE_ENTRIES,
 				allColumns, null, null, null, null, null);
 
 		cursor.moveToFirst();
 		while (!cursor.isAfterLast()) {
-			JournalEntry entry = cursorToEntry(cursor);
+			PhotobackupPicture entry = cursorToEntry(cursor);
 			entries.add(entry);
 			cursor.moveToNext();
 		}
@@ -76,8 +78,8 @@ public class JournalEntriesDataSource {
 		return entries;
 	}
 
-	private JournalEntry cursorToEntry(Cursor cursor) {
-		JournalEntry entry = new JournalEntry();
+	private PhotobackupPicture cursorToEntry(Cursor cursor) {
+		PhotobackupPicture entry = new PhotobackupPicture();
 		entry.setId(cursor.getLong(0));
 		entry.setDate(cursor.getString(1));
 		entry.setFilename(cursor.getString(2));
@@ -85,3 +87,4 @@ public class JournalEntriesDataSource {
 		return entry;
 	}
 }
+*/

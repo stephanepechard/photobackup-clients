@@ -1,9 +1,11 @@
-package fr.s13d.photobackup.journal;
+/*package fr.s13d.photobackup.journal;
 
 import java.util.List;
 
 import android.app.ListActivity;
 import android.os.Bundle;
+
+import fr.s13d.photobackup.PhotobackupPicture;
 import fr.s13d.photobackup.R;
 
 public class JournalActivity extends ListActivity {
@@ -17,7 +19,7 @@ public class JournalActivity extends ListActivity {
 		datasource = new JournalEntriesDataSource(this);
 		datasource.open();
 
-		List<JournalEntry> values = datasource.getAllEntries();
+		List<PhotobackupPicture> values = datasource.getAllEntries();
 		JournalAdapter adapter = new JournalAdapter(this, values, getResources());
 		setListAdapter(adapter);
 	}
@@ -35,3 +37,4 @@ public class JournalActivity extends ListActivity {
 		super.onPause();
 	}
 }
+*/

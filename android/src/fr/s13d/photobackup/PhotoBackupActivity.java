@@ -8,22 +8,19 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.EditTextPreference;
 import android.preference.SwitchPreference;
-import android.util.Log;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
 import com.crashlytics.android.Crashlytics;
 
-import java.io.File;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class PhotoBackupActivity extends Activity implements OnSharedPreferenceChangeListener {
 
-    private static final String LOG_TAG = "PhotoBackupService";
+    private static final String LOG_TAG = "PhotoBackupActivity";
 
     // should correspond to what is in preferences.xml
     private static final String PREF_SERVICE_RUNNING = "PREF_SERVICE_RUNNING";
@@ -31,9 +28,7 @@ public class PhotoBackupActivity extends Activity implements OnSharedPreferenceC
     private static final String PREF_SERVER_PASS = "PREF_SERVER_PASS";
     public static final String PREF_SERVER_PASS_HASH = "PREF_SERVER_PASS_HASH";
     private static final String PREF_ONLY_WIFI = "PREF_ONLY_WIFI";
-	public static final String PICTURE_DIR = "fr.s13d.photobackup.PICTURE_DIR";
 
-	private Intent serviceIntent = null;
 	private SettingsFragment settingsFragment = null;
 	private Boolean hashIsComputed = false;
     private SharedPreferences sharedPreferences;
@@ -45,85 +40,44 @@ public class PhotoBackupActivity extends Activity implements OnSharedPreferenceC
 		super.onCreate(savedInstanceState);
 		Crashlytics.start(this);
 
-        File pictureDirectory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM);
-		if (pictureDirectory.exists()) {
-			serviceIntent = new Intent(this, PhotoBackupService.class);
-			serviceIntent.putExtra(PICTURE_DIR, pictureDirectory.getAbsolutePath());
-
-			// Display the settings fragment as the main content.
-			settingsFragment = new SettingsFragment();
-			getFragmentManager().beginTransaction().replace(android.R.id.content, settingsFragment).commit();
-		} else {
-			setContentView(R.layout.activity_config);
-		}
-	}
-
-
-	@Override
-	protected void onStart() {
-		super.onStart();
-
-        // Create the shared preferences used by the fragment
+    	settingsFragment = new SettingsFragment();
         sharedPreferences = settingsFragment.getPreferenceManager().getSharedPreferences();
         sharedPreferencesEditor = sharedPreferences.edit();
-
-        setPreferences();
-	}
-
-
-	private void setPreferences() {
-		// Init the preferences
-		if (settingsFragment != null) {
-			// service switch
-            sharedPreferencesEditor.putBoolean(PREF_SERVICE_RUNNING, isPhotoBackupServiceRunning());
-			// server url
-			String serverUrlSummary = sharedPreferences.getString(PREF_SERVER_URL, "");
-			EditTextPreference serverUrlTextPreference = (EditTextPreference) settingsFragment.findPreference(PREF_SERVER_URL);
-			if (serverUrlSummary.isEmpty()) {
-                serverUrlTextPreference.setSummary(getResources().getString(R.string.server_url_summary));
-			} else {
-                serverUrlTextPreference.setSummary(serverUrlSummary);
-			}
-			// server password
-			String serverPassHash = sharedPreferences.getString(PREF_SERVER_PASS_HASH, "");
-			EditTextPreference serverPassTextPreference = (EditTextPreference) settingsFragment.findPreference(PREF_SERVER_PASS);
-			if (serverPassHash.isEmpty()) {
-                serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary));
-			} else {
-                serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary_set));
-            }
-
-            sharedPreferencesEditor.apply();
-		}
+        getFragmentManager().beginTransaction().replace(android.R.id.content, settingsFragment).commit();
 	}
 
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-        sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        if (sharedPreferences != null) {
+            sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        }
+
 	}
 
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        if (sharedPreferences != null) {
+            sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        }
 	}
 
 
 	@Override
 	public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
-		Log.v("PhotoBackupActivity", "onSharedPreferenceChanged for: " + key);
-
-		// TODO: settings validation
+		Log.i(LOG_TAG, "onSharedPreferenceChanged for: " + key);
 
 		if (key.equals(PREF_SERVICE_RUNNING)) {
+            Log.i(LOG_TAG, "PREF_SERVICE_RUNNING = " + sharedPreferences.getBoolean(PREF_SERVICE_RUNNING, false));
 
 			// Start/Stop the service
 			if (sharedPreferences.getBoolean(PREF_SERVICE_RUNNING, false)) {
 				if (validateSettings()) {
                     Log.i(LOG_TAG, "start PhotoBackup service");
+                    Intent serviceIntent = new Intent(this, PhotoBackupService.class);
 					startService(serviceIntent);
 				} else {
 					SwitchPreference switchPreference = (SwitchPreference) settingsFragment.findPreference(PREF_SERVICE_RUNNING);
@@ -131,8 +85,11 @@ public class PhotoBackupActivity extends Activity implements OnSharedPreferenceC
 				}
 			} else {
 				if (isPhotoBackupServiceRunning()) {
-                    Log.i(LOG_TAG, "stop PhotoBackup service");
-					stopService(serviceIntent);
+                    PhotoBackupService service = PhotoBackupService.getInstance();
+                    if (service != null) {
+                        Log.i(LOG_TAG, "stop PhotoBackup service");
+                        service.stopSelf();
+                    }
 				}
 			}
 
@@ -164,14 +121,23 @@ public class PhotoBackupActivity extends Activity implements OnSharedPreferenceC
                     sharedPreferencesEditor.putString(PREF_SERVER_PASS_HASH, hash);
                     sharedPreferencesEditor.commit();
 
-				} catch (NoSuchAlgorithmException e) {
+                } catch (NoSuchAlgorithmException e) {
 					Log.e(LOG_TAG, "ERROR: " + e.getMessage());
 				}
 			} else {
 				hashIsComputed = false;
 			}
 
-		} else if (key.equals(PREF_SERVER_PASS_HASH)) {
+            // update fragment
+            String serverPassHash = sharedPreferences.getString(PREF_SERVER_PASS_HASH, "");
+            EditTextPreference serverPassTextPreference = (EditTextPreference) settingsFragment.findPreference(PREF_SERVER_PASS);
+            if (serverPassHash.isEmpty()) {
+                serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary));
+            } else {
+                serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary_set));
+            }
+
+        } else if (key.equals(PREF_SERVER_PASS_HASH)) {
 			hashIsComputed = true;
 
 			// Remove the real password from the preferences, for security.
@@ -185,9 +151,8 @@ public class PhotoBackupActivity extends Activity implements OnSharedPreferenceC
 			// TODO: implement
 		}
 
-        setPreferences();
-
     }
+
 
 	private boolean validateSettings() {
 		String serverUrl = sharedPreferences.getString(PREF_SERVER_URL, "");
@@ -204,6 +169,7 @@ public class PhotoBackupActivity extends Activity implements OnSharedPreferenceC
 
         return true;
 	}
+
 
 	// Returns the current state of the PhotoBackup Service
 	// See http://stackoverflow.com/a/5921190/417006

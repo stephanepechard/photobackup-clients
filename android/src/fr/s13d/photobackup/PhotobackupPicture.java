@@ -1,17 +1,13 @@
-package fr.s13d.photobackup.journal;
+package fr.s13d.photobackup;
 
+import com.orm.SugarRecord;
 
-public class JournalEntry {
-	private long id = 0;
-	private String date = null;
-	private String filename = null;
-	private long uploaded = 0;
+public class PhotobackupPicture extends SugarRecord<PhotobackupPicture> {
+	String date;
+	String filename;
+    enum State { ON_, BACKUPED_UP };
 
-	public long getId() {
-		return id;
-	}
-
-	public void setId(long newId) {
+/*	public void setId(long newId) {
 		id = newId;
 	}
 
@@ -38,7 +34,7 @@ public class JournalEntry {
 	public void setUploaded(long newUploaded) {
 		uploaded = newUploaded;
 	}
-
+*/
 
 	// Will be used by the ArrayAdapter in the ListView
 	@Override

@@ -7,7 +7,7 @@ import android.util.Log;
 
 public class JournalEntryOpenHelper extends SQLiteOpenHelper {
 
-	private static final String DATABASE_NAME = "JournalEntries.db";
+	private static final String DATABASE_NAME = "PhotoBackupJournal.sqlite";
 	private static final int DATABASE_VERSION = 1;
 
 	public static final String TABLE_ENTRIES = "entries";
