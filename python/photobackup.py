@@ -44,6 +44,8 @@ def response(status_code):
         print(term.red + "ERROR: the server does not know this url!")        
     elif status_code == 408:
         print(term.red + "ERROR: request took too long!")
+    elif status_code == 413:
+        print(term.red + "ERROR: file too large, modify your server config!")
     elif status_code == 500:
         print(term.red + "ERROR: server made a booboo!")
     else:
@@ -51,8 +53,7 @@ def response(status_code):
 
 
 def upload(url, image):
-    upfile = { 'upfile': image }
-
+    upfile = { 'upfile': open(image, 'rb') }
     try:
         request = requests.post(url, files=upfile, data=password())
     except requests.exceptions.MissingSchema:
