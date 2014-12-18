@@ -1,7 +1,4 @@
-/*package fr.s13d.photobackup.journal;
-
-import java.io.File;
-import java.util.List;
+package fr.s13d.photobackup;
 
 import android.app.Activity;
 import android.content.Context;
@@ -14,31 +11,29 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import fr.s13d.photobackup.PhotobackupPicture;
-import fr.s13d.photobackup.R;
+import java.util.List;
 
-public class JournalAdapter extends BaseAdapter {
-	private final Activity activity;
-	private final List<PhotobackupPicture> values;
-	private static LayoutInflater inflater=null;
+
+public class PBJournalAdapter extends BaseAdapter {
+	private final List<PBPicture> pictures;
+	private static LayoutInflater inflater = null;
 	private Resources resources = null;
 
-	public JournalAdapter(Activity newActivity, List<PhotobackupPicture> newValues, Resources newResources) {
-		activity = newActivity;
-		values = newValues;
+	public PBJournalAdapter(Activity newActivity, List<PBPicture> newPictures, Resources newResources) {
+		pictures = newPictures;
 		resources = newResources;
-		inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+		inflater = (LayoutInflater)newActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
 
 
 	@Override
 	public int getCount() {
-		return values.size();
+        return pictures.size();
 	}
 
 	@Override
 	public Object getItem(int position) {
-		return values.get(position);
+		return pictures.get(position);
 	}
 
 	@Override
@@ -51,26 +46,27 @@ public class JournalAdapter extends BaseAdapter {
 		if(view == null) {
 			view = inflater.inflate(R.layout.list_row, null);
 		}
-		PhotobackupPicture entry = values.get(position);
+        PBPicture picture = pictures.get(position);
 
 		// thumbnail
 		ImageView thumbImageView = (ImageView)view.findViewById(R.id.thumbnail);
-		if (BitmapWorkerTask.cancelPotentialWork(entry, thumbImageView)) {
+		if (BitmapWorkerTask.cancelPotentialWork(picture, thumbImageView)) {
 			final BitmapWorkerTask task = new BitmapWorkerTask(thumbImageView, resources, view);
 			Bitmap placeholderBitmap = null;
 			final AsyncDrawable asyncDrawable = new AsyncDrawable(resources, placeholderBitmap, task);
 			thumbImageView.setImageDrawable(asyncDrawable);
-			task.execute(entry);
+			task.execute(picture);
 		}
 
 		// filename
 		TextView textView = (TextView)view.findViewById(R.id.filename);
-		File file = new File(entry.getFilename());
-		textView.setText(file.getName());
+        if (picture.getFile().getName() != null) {
+            textView.setText(picture.getFile().getName());
+        }
 
 		// error
 		ImageView errorImageView = (ImageView)view.findViewById(R.id.error);
-		if (entry.getUploaded() == 1) {
+		if (picture.getUploaded()) {
 			errorImageView.setVisibility(View.INVISIBLE);
 		} else {
 			errorImageView.setVisibility(View.VISIBLE);
@@ -80,4 +76,3 @@ public class JournalAdapter extends BaseAdapter {
 	}
 
 }
-*/

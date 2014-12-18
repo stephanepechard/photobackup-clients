@@ -16,17 +16,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 package fr.s13d.photobackup;
 
-import android.os.Bundle;
-import android.preference.PreferenceFragment;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 
-public class SettingsFragment extends PreferenceFragment {
+public class PBBootBroadcastReceiver extends BroadcastReceiver {
 
 	@Override
-	public void onCreate(final Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		addPreferencesFromResource(R.xml.preferences);
+	public void onReceive(final Context context, final Intent intent) {
+		Intent startServiceIntent = new Intent(context, PBService.class);
+		context.startService(startServiceIntent);
 	}
 
 }

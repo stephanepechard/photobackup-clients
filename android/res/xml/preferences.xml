@@ -32,7 +32,7 @@
 
     </PreferenceCategory>
 
-    <!--
+
         <PreferenceCategory
             android:title="@string/info_conf"
             android:key="info_conf">
@@ -41,11 +41,11 @@
                 <intent
                     android:action="android.intent.action.VIEW"
                     android:targetPackage="fr.s13d.photobackup"
-                    android:targetClass="fr.s13d.photobackup.journal.JournalActivity"/>
+                    android:targetClass="fr.s13d.photobackup.PBJournalActivity"/>
             </Preference>
 
         </PreferenceCategory>
-
+<!--
         <PreferenceCategory
             android:title="@string/device_conf"
             android:key="device_conf">
@@ -58,6 +58,6 @@
                 android:defaultValue="false"
                 android:dependency="PREF_SERVICE_RUNNING" />
 
-        </PreferenceCategory> -->
-    
+        </PreferenceCategory>
+-->
 </PreferenceScreen>

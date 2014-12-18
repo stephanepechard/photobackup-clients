@@ -50,54 +50,23 @@ import org.apache.http.params.HttpParams;
 import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Locale;
 
 
-public class PhotoBackupService extends Service {
+public class PBService extends Service {
 
-	private static final String LOG_TAG = "PhotoBackupService";
-    private SharedPreferences sharedPreferences;
-	//private final JournalEntriesDataSource datasource;
-    private static PhotoBackupService self;
+	private static final String LOG_TAG = "PBService";
+    private static SharedPreferences sharedPreferences;
+    private static PBService self;
     private MediaContentObserver newMediaContentObserver;
 
 
-	public PhotoBackupService() {
-		//datasource = new JournalEntriesDataSource(this);
+	public PBService() {
         self = this;
-        Log.i(LOG_TAG, "create PhotoBackupService");
-	}
-
-    public static PhotoBackupService getInstance() {
-        Log.i(LOG_TAG, "getInstance: " + System.identityHashCode(self));
-        return self;
     }
 
 
-    // ContentObserver to react on the creation of a new media
-    private class MediaContentObserver extends ContentObserver {
-
-        public MediaContentObserver() {
-            super(null);
-            Log.d(LOG_TAG, "new MediaContentObserver");
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            super.onChange(selfChange);
-            PhotoBackupPicture picture = readFromMediaStore(getApplicationContext(),
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            Log.d(LOG_TAG, "detected picture: " + picture.toString());
-
-            try {
-                addPhotoToQueue(picture.getFile().getAbsolutePath());
-            }
-            catch (Exception e) {
-                PhotoBackupService.this.notify("Error", "onEvent" + e.toString());
-            }
-        }
+    public static PBService getInstance() {
+        return self;
     }
 
 
@@ -107,8 +76,10 @@ public class PhotoBackupService extends Service {
         newMediaContentObserver = new MediaContentObserver();
         this.getApplicationContext().getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, newMediaContentObserver);
-
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        Toast.makeText(this, "PhotoBackup service has started.", Toast.LENGTH_SHORT).show();
+        Log.i(LOG_TAG, "start PhotoBackup service");
     }
 
 
@@ -117,8 +88,8 @@ public class PhotoBackupService extends Service {
         super.onDestroy();
         this.getApplicationContext().getContentResolver()
                 .unregisterContentObserver(newMediaContentObserver);
-        Log.v(LOG_TAG, "FileObserver stopped");
         Toast.makeText(this, "PhotoBackup service has stopped.", Toast.LENGTH_SHORT).show();
+        Log.i(LOG_TAG, "stop PhotoBackup service");
     }
 
 
@@ -134,17 +105,29 @@ public class PhotoBackupService extends Service {
     }
 
 
-	private void notify(final String title, final String text) {
-		NotificationCompat.Builder builder = new NotificationCompat.Builder(this).setSmallIcon(R.drawable.ic_launcher)
-		        .setContentTitle(title).setContentText(text);
+    // ContentObserver to react on the creation of a new media
+    private class MediaContentObserver extends ContentObserver {
 
-		Intent notificationIntent = new Intent(this, PhotoBackupActivity.class);
-		PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		builder.setContentIntent(contentIntent);
+        public MediaContentObserver() {
+            super(null);
+        }
 
-		NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		notificationManager.notify(0, builder.build());
-	}
+        @Override
+        public void onChange(boolean selfChange) {
+            super.onChange(selfChange);
+            PBPicture picture = readFromMediaStore(getApplicationContext(),
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            Log.d(LOG_TAG, "detected picture: " + picture.toString());
+
+            try {
+                addPhotoToQueue(picture.getFile().getAbsolutePath());
+                picture.save();
+            }
+            catch (Exception e) {
+                PBService.this.notify("Error", "onChange" + e.toString());
+            }
+        }
+    }
 
 
     private void addPhotoToQueue(final String fullPath) {
@@ -154,8 +137,8 @@ public class PhotoBackupService extends Service {
 
 	private void postPhoto(final String path) {
 		// get the user preferences
-		String serverUrl = sharedPreferences.getString(PhotoBackupActivity.PREF_SERVER_URL, "");
-		String serverHash = sharedPreferences.getString(PhotoBackupActivity.PREF_SERVER_PASS_HASH, "");
+		String serverUrl = sharedPreferences.getString(PBSettingsFragment.PREF_SERVER_URL, "");
+		String serverHash = sharedPreferences.getString(PBSettingsFragment.PREF_SERVER_PASS_HASH, "");
 
 		// create a new HttpClient
 		int timeout = 5000; // in milliseconds
@@ -195,33 +178,30 @@ public class PhotoBackupService extends Service {
 		catch (IOException e) {
 			notify(getResources().getString(R.string.error_uploadfailed), getResources().getString(R.string.error_noresponse));
 		}
-
-		// Add it to the journal
-		/*datasource.open();
-		datasource.createEntry(now(), upfile.getAbsolutePath(), uploaded);
-		datasource.close();*/
 	}
 
 
+    private void notify(final String title, final String text) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this).setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle(title).setContentText(text);
 
-	private static final String DATE_FORMAT_NOW = "yyyy-MM-dd HH:mm:ss";
-	private static String now() {
-		Calendar cal = Calendar.getInstance();
-		SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT_NOW, Locale.FRANCE);
-		return sdf.format(cal.getTime());
-	}
+        Intent notificationIntent = new Intent(this, PBActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.setContentIntent(contentIntent);
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.notify(0, builder.build());
+    }
 
 
-    private PhotoBackupPicture readFromMediaStore(Context context, Uri uri) {
+    private PBPicture readFromMediaStore(Context context, Uri uri) {
         Cursor cursor = context.getContentResolver().query(
                 uri, null, null, null, "date_added DESC");
-        PhotoBackupPicture picture = null;
+        PBPicture picture = null;
         if (cursor.moveToNext()) {
             int dataColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATA);
             String filePath = cursor.getString(dataColumn);
-            //int mimeTypeColumn = cursor.getColumnIndexOrThrow(MediaColumns.MIME_TYPE);
-            //String mimeType = cursor.getString(mimeTypeColumn);
-            picture = new PhotoBackupPicture(new File(filePath));
+            picture = new PBPicture(new File(filePath));
         }
         cursor.close();
         return picture;

@@ -1,6 +1,4 @@
-/*package fr.s13d.photobackup.journal;
-
-import java.lang.ref.WeakReference;
+package fr.s13d.photobackup;
 
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -13,14 +11,14 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 
-import fr.s13d.photobackup.PhotobackupPicture;
-import fr.s13d.photobackup.R;
+import java.lang.ref.WeakReference;
 
-class BitmapWorkerTask extends AsyncTask<PhotobackupPicture, Void, Bitmap> {
+
+class BitmapWorkerTask extends AsyncTask<PBPicture, Void, Bitmap> {
 	private final WeakReference<ImageView> imageViewReference;
 	private Resources resources = null;
 	private ProgressBar progressBar = null;
-	public PhotobackupPicture entry = null;
+	public PBPicture entry = null;
 
 	public BitmapWorkerTask(ImageView imageView, Resources newResources, View view) {
 		// Use a WeakReference to ensure the ImageView can be garbage collected
@@ -32,16 +30,19 @@ class BitmapWorkerTask extends AsyncTask<PhotobackupPicture, Void, Bitmap> {
 
 	// Decode image in background.
 	@Override
-	protected Bitmap doInBackground(PhotobackupPicture... params) {
+	protected Bitmap doInBackground(PBPicture... params) {
 		entry = params[0];
-		Bitmap fullResolutionPicture = BitmapFactory.decodeFile(entry.getFilename());
-		Bitmap thumbnailPicture = null;
-		if (fullResolutionPicture == null) { // picture is absent
-			thumbnailPicture = BitmapFactory.decodeResource(resources, R.drawable.navigation_cancel);
-		} else {
-			thumbnailPicture = ThumbnailUtils.extractThumbnail(fullResolutionPicture, 90, 90);
-		}
-		return thumbnailPicture;
+        if (entry != null && entry.getFile() != null) {
+            Bitmap fullResolutionPicture = BitmapFactory.decodeFile(entry.getFile().getAbsolutePath());
+            Bitmap thumbnailPicture = null;
+            if (fullResolutionPicture == null) { // picture is absent
+                thumbnailPicture = BitmapFactory.decodeResource(resources, R.drawable.navigation_cancel);
+            } else {
+                thumbnailPicture = ThumbnailUtils.extractThumbnail(fullResolutionPicture, 90, 90);
+            }
+            return thumbnailPicture;
+        }
+        return null;
 	}
 
 
@@ -75,11 +76,11 @@ class BitmapWorkerTask extends AsyncTask<PhotobackupPicture, Void, Bitmap> {
 	}
 
 
-	public static boolean cancelPotentialWork(PhotobackupPicture entry, ImageView imageView) {
+	public static boolean cancelPotentialWork(PBPicture entry, ImageView imageView) {
 		final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
 
 		if (bitmapWorkerTask != null) {
-			final PhotobackupPicture bitmapData = bitmapWorkerTask.entry;
+			final PBPicture bitmapData = bitmapWorkerTask.entry;
 			if (bitmapData != entry) {
 				// Cancel previous task
 				bitmapWorkerTask.cancel(true);
@@ -106,4 +107,3 @@ final class AsyncDrawable extends BitmapDrawable {
 		return bitmapWorkerTaskReference.get();
 	}
 }
-*/
