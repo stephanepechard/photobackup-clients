@@ -12,9 +12,8 @@ public class PBJournalActivity extends ListActivity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_journal);
 
-        List<PBPicture> books = PBPicture.listAll(PBPicture.class);
-
-		PBJournalAdapter adapter = new PBJournalAdapter(this, books, getResources());
+        List<PBPicture> pictures = PBPicture.listAll(PBPicture.class);
+		PBJournalAdapter adapter = new PBJournalAdapter(this, pictures, getResources());
 		setListAdapter(adapter);
 	}
 

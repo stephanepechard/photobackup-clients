@@ -24,13 +24,16 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 
 public class PBSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -54,6 +57,15 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
 		addPreferencesFromResource(R.xml.preferences);
         sharedPreferences = getPreferenceManager().getSharedPreferences();
         sharedPreferencesEditor = sharedPreferences.edit();
+
+        // Hide upload journal access if it is empty
+        List<PBPicture> pictures = PBPicture.listAll(PBPicture.class);
+        Log.i(LOG_TAG, "Found " + pictures.size() + " picture(s)");
+        if (pictures.size() == 0) {
+            PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference("PBPreferences");
+            PreferenceCategory preferenceCategory = (PreferenceCategory) findPreference("info_conf");
+            preferenceScreen.removePreference(preferenceCategory);
+        }
 	}
 
 
