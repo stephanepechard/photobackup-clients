@@ -1,3 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android" >
 
+    <item
+        android:id="@+id/action_upload_history"
+        android:icon="@android:drawable/ic_media_rew"
+        android:title="Upload all pictures"/>
+
 </menu>

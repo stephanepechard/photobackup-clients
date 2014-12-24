@@ -9,32 +9,32 @@ import android.media.ThumbnailUtils;
 import android.os.AsyncTask;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 
 import java.lang.ref.WeakReference;
 
 
-class BitmapWorkerTask extends AsyncTask<PBPicture, Void, Bitmap> {
+class BitmapWorkerTask extends AsyncTask<String, Void, Bitmap> {
 	private final WeakReference<ImageView> imageViewReference;
 	private Resources resources = null;
-	private ProgressBar progressBar = null;
-	public PBPicture entry = null;
+	//private ProgressBar progressBar = null;
+	public String picturePath = null;
+
 
 	public BitmapWorkerTask(ImageView imageView, Resources newResources, View view) {
 		// Use a WeakReference to ensure the ImageView can be garbage collected
-		imageViewReference = new WeakReference<ImageView>(imageView);
+		imageViewReference = new WeakReference<>(imageView);
 		resources = newResources;
-		progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
-		progressBar.setVisibility(View.VISIBLE);
+		//progressBar = (ProgressBar) view.findViewById(R.id.progressBar);
+		//progressBar.setVisibility(View.VISIBLE);
 	}
 
 	// Decode image in background.
 	@Override
-	protected Bitmap doInBackground(PBPicture... params) {
-		entry = params[0];
-        if (entry != null && entry.getFile() != null) {
-            Bitmap fullResolutionPicture = BitmapFactory.decodeFile(entry.getFile().getAbsolutePath());
-            Bitmap thumbnailPicture = null;
+	protected Bitmap doInBackground(String... params) {
+		picturePath = params[0];
+        if (picturePath != null) {
+            Bitmap fullResolutionPicture = BitmapFactory.decodeFile(picturePath);
+            Bitmap thumbnailPicture;
             if (fullResolutionPicture == null) { // picture is absent
                 thumbnailPicture = BitmapFactory.decodeResource(resources, R.drawable.navigation_cancel);
             } else {
@@ -49,16 +49,12 @@ class BitmapWorkerTask extends AsyncTask<PBPicture, Void, Bitmap> {
 	// Once complete, see if ImageView is still around and set bitmap.
 	@Override
 	protected void onPostExecute(Bitmap bitmap) {
-		if (isCancelled()) {
-			bitmap = null;
-		}
-
-		if ((imageViewReference != null) && (bitmap != null)) {
+		if (!isCancelled()) {
 			final ImageView imageView = imageViewReference.get();
 			final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
 			if ((this == bitmapWorkerTask) && (imageView != null)) {
 				imageView.setImageBitmap(bitmap);
-				progressBar.setVisibility(View.INVISIBLE);
+				//progressBar.setVisibility(View.INVISIBLE);
 			}
 		}
 	}
@@ -76,12 +72,12 @@ class BitmapWorkerTask extends AsyncTask<PBPicture, Void, Bitmap> {
 	}
 
 
-	public static boolean cancelPotentialWork(PBPicture entry, ImageView imageView) {
+	public static boolean cancelPotentialWork(String entry, ImageView imageView) {
 		final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(imageView);
 
 		if (bitmapWorkerTask != null) {
-			final PBPicture bitmapData = bitmapWorkerTask.entry;
-			if (bitmapData != entry) {
+			final String bitmapData = bitmapWorkerTask.picturePath;
+			if (bitmapData != null && entry != null && bitmapData.equals(entry)) {
 				// Cancel previous task
 				bitmapWorkerTask.cancel(true);
 			} else {
@@ -100,7 +96,7 @@ final class AsyncDrawable extends BitmapDrawable {
 
 	public AsyncDrawable(Resources res, Bitmap bitmap, BitmapWorkerTask bitmapWorkerTask) {
 		super(res, bitmap);
-		bitmapWorkerTaskReference = new WeakReference<BitmapWorkerTask>(bitmapWorkerTask);
+		bitmapWorkerTaskReference = new WeakReference<>(bitmapWorkerTask);
 	}
 
 	public BitmapWorkerTask getBitmapWorkerTask() {

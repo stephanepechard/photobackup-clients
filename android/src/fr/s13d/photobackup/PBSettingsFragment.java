@@ -24,8 +24,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.EditTextPreference;
+import android.preference.Preference;
 import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.webkit.URLUtil;
@@ -33,14 +35,13 @@ import android.widget.Toast;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.List;
 
 
 public class PBSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String LOG_TAG = "PBSettingsFragment";
-    private SharedPreferences sharedPreferences;
-    private SharedPreferences.Editor sharedPreferencesEditor;
+    private SharedPreferences defaultPreferences;
+    private SharedPreferences.Editor defaultSharedPreferences;
     private Boolean hashIsComputed = false;
 
     // should correspond to what is in preferences.xml
@@ -55,16 +56,19 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
-        sharedPreferences = getPreferenceManager().getSharedPreferences();
-        sharedPreferencesEditor = sharedPreferences.edit();
+        defaultPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        defaultSharedPreferences = defaultPreferences.edit();
 
         // Hide upload journal access if it is empty
-        List<PBPicture> pictures = PBPicture.listAll(PBPicture.class);
-        Log.i(LOG_TAG, "Found " + pictures.size() + " picture(s)");
-        if (pictures.size() == 0) {
-            PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference("PBPreferences");
-            PreferenceCategory preferenceCategory = (PreferenceCategory) findPreference("info_conf");
+        int nbPicture = PBActivity.mediaStore.getMediaCount();
+        Log.i(LOG_TAG, "Found " + nbPicture + " picture(s)");
+        if (nbPicture == 0) {
+            final PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference("PBPreferences");
+            final PreferenceCategory preferenceCategory = (PreferenceCategory) findPreference("info_conf");
             preferenceScreen.removePreference(preferenceCategory);
+        } else {
+            final Preference pref = findPreference("uploadJournalPref");
+            pref.setTitle(pref.getTitle() + "(" + nbPicture + ")");
         }
 	}
 
@@ -72,8 +76,8 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
     @Override
     public void onResume() {
         super.onResume();
-        if (sharedPreferences != null) {
-            sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        if (defaultPreferences != null) {
+            defaultPreferences.registerOnSharedPreferenceChangeListener(this);
         }
 
     }
@@ -82,8 +86,8 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
     @Override
     public void onPause() {
         super.onPause();
-        if (sharedPreferences != null) {
-            sharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        if (defaultPreferences != null) {
+            defaultPreferences.unregisterOnSharedPreferenceChangeListener(this);
         }
     }
 
@@ -98,10 +102,10 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             // Start/Stop the service
             if (sharedPreferences.getBoolean(PREF_SERVICE_RUNNING, false)) {
                 if (validateSettings()) {
-                    Intent serviceIntent = new Intent(getActivity(), PBService.class);
+                    final Intent serviceIntent = new Intent(getActivity(), PBService.class);
                     getActivity().startService(serviceIntent);
                 } else {
-                    SwitchPreference switchPreference = (SwitchPreference) findPreference(PREF_SERVICE_RUNNING);
+                    final SwitchPreference switchPreference = (SwitchPreference) findPreference(PREF_SERVICE_RUNNING);
                     switchPreference.setChecked(false);
                 }
             } else {
@@ -115,13 +119,13 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             }
 
         } else if (key.equals(PREF_SERVER_URL)) {
-            EditTextPreference textPreference = (EditTextPreference) findPreference(PREF_SERVER_URL);
+            final EditTextPreference textPreference = (EditTextPreference) findPreference(PREF_SERVER_URL);
             textPreference.setSummary(sharedPreferences.getString(PREF_SERVER_URL, ""));
 
         } else if (key.equals(PREF_SERVER_PASS)) {
             // store only the hash of the password in the preferences
             if (!hashIsComputed) {
-                String pass = sharedPreferences.getString(PREF_SERVER_PASS, "");
+                final String pass = sharedPreferences.getString(PREF_SERVER_PASS, "");
 
                 try {
                     // compute the hash
@@ -139,8 +143,8 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
                     }
 
                     // set the hash in the preferences
-                    sharedPreferencesEditor.putString(PREF_SERVER_PASS_HASH, hash);
-                    sharedPreferencesEditor.commit();
+                    defaultSharedPreferences.putString(PREF_SERVER_PASS_HASH, hash);
+                    defaultSharedPreferences.commit();
 
                 } catch (NoSuchAlgorithmException e) {
                     Log.e(LOG_TAG, "ERROR: " + e.getMessage());
@@ -150,8 +154,8 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             }
 
             // update fragment
-            String serverPassHash = sharedPreferences.getString(PREF_SERVER_PASS_HASH, "");
-            EditTextPreference serverPassTextPreference = (EditTextPreference) findPreference(PREF_SERVER_PASS);
+            final String serverPassHash = sharedPreferences.getString(PREF_SERVER_PASS_HASH, "");
+            final EditTextPreference serverPassTextPreference = (EditTextPreference) findPreference(PREF_SERVER_PASS);
             if (serverPassHash.isEmpty()) {
                 serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary));
             } else {
@@ -162,8 +166,8 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             hashIsComputed = true;
 
             // Remove the real password from the preferences, for security.
-            sharedPreferencesEditor.putString(PREF_SERVER_PASS, "");
-            sharedPreferencesEditor.commit();
+            defaultSharedPreferences.putString(PREF_SERVER_PASS, "");
+            defaultSharedPreferences.commit();
 
         } else if (key.equals(PREF_ONLY_WIFI)) {
             // Allow the user not to use the mobile network to upload the pictures
@@ -176,13 +180,13 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
 
 
     private boolean validateSettings() {
-        String serverUrl = sharedPreferences.getString(PREF_SERVER_URL, "");
+        String serverUrl = defaultPreferences.getString(PREF_SERVER_URL, "");
         if (!URLUtil.isValidUrl(serverUrl) || serverUrl.isEmpty()) {
             Toast.makeText(getActivity(), R.string.toast_urisyntaxexception, Toast.LENGTH_LONG).show();
             return false;
         }
 
-        String serverPassHash = sharedPreferences.getString(PREF_SERVER_PASS_HASH, "");
+        String serverPassHash = defaultPreferences.getString(PREF_SERVER_PASS_HASH, "");
         if (serverPassHash.isEmpty()) {
             Toast.makeText(getActivity(), R.string.toast_serverpassempty, Toast.LENGTH_LONG).show();
             return false;
@@ -195,7 +199,7 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
     // Returns the current state of the PhotoBackup Service
     // See http://stackoverflow.com/a/5921190/417006
     private boolean isPhotoBackupServiceRunning() {
-        ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
+        final ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (PBService.class.getName().equals(service.service.getClassName())) {
                 return true;

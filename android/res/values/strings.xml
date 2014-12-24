@@ -4,8 +4,8 @@
     <string name="app_name">PhotoBackup</string>
 
     <string name="service_title">Service</string>
-    <string name="service_state_running">The service is running.</string>
-    <string name="service_state_not_running">The service is not running.</string>
+    <string name="service_state_running">PhotoBackup is running.</string>
+    <string name="service_state_not_running">PhotoBackup is not running.</string>
 
     <string name="server_conf">Server configuration</string>
 
@@ -26,7 +26,7 @@
     <string name="only_wifi">Backup on wifi only</string>
     <string name="not_only_wifi">Backup on wifi and data network</string>
 
-    <string name="toast_urisyntaxexception">The given address is invalid!</string>
+    <string name="toast_urisyntaxexception">The server address is invalid!</string>
     <string name="toast_serverpassempty">The password cannot be empty!</string>
     
     <string name="error_nopicturedirectory">I couldn\'t find your pictures!\nSorry :-(</string>

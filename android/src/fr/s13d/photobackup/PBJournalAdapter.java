@@ -11,29 +11,30 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.List;
 
 
 public class PBJournalAdapter extends BaseAdapter {
-	private final List<PBPicture> pictures;
-	private static LayoutInflater inflater = null;
+    private final List<String> medias;
+	private static LayoutInflater inflater;
 	private Resources resources = null;
 
-	public PBJournalAdapter(Activity newActivity, List<PBPicture> newPictures, Resources newResources) {
-		pictures = newPictures;
-		resources = newResources;
-		inflater = (LayoutInflater)newActivity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+	public PBJournalAdapter(Activity activity) {
+        medias = PBActivity.mediaStore.getMediaIds();
+		resources = activity.getResources();
+		inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
 
 
 	@Override
 	public int getCount() {
-        return pictures.size();
+        return medias.size();
 	}
 
 	@Override
 	public Object getItem(int position) {
-		return pictures.get(position);
+		return medias.get(position);
 	}
 
 	@Override
@@ -46,30 +47,35 @@ public class PBJournalAdapter extends BaseAdapter {
 		if(view == null) {
 			view = inflater.inflate(R.layout.list_row, null);
 		}
-        PBPicture picture = pictures.get(position);
+        String mediaIdString = medias.get(position);
+        int mediaId = Integer.parseInt(mediaIdString);
+        PBMedia media = PBActivity.mediaStore.getMedia(mediaId);
 
 		// thumbnail
 		ImageView thumbImageView = (ImageView)view.findViewById(R.id.thumbnail);
-		if (BitmapWorkerTask.cancelPotentialWork(picture, thumbImageView)) {
+		if (BitmapWorkerTask.cancelPotentialWork(media.getPath(), thumbImageView)) {
 			final BitmapWorkerTask task = new BitmapWorkerTask(thumbImageView, resources, view);
 			Bitmap placeholderBitmap = null;
 			final AsyncDrawable asyncDrawable = new AsyncDrawable(resources, placeholderBitmap, task);
 			thumbImageView.setImageDrawable(asyncDrawable);
-			task.execute(picture);
+			task.execute(media.getPath());
 		}
 
 		// filename
 		TextView textView = (TextView)view.findViewById(R.id.filename);
-        if (picture.getFile().getName() != null) {
-            textView.setText(picture.getFile().getName());
+        if (media.getPath() != null) {
+            File file = new File(media.getPath());
+            textView.setText(file.getName());
+        } else {
+            textView.setText("Error on picture data");
         }
 
 		// error
 		ImageView errorImageView = (ImageView)view.findViewById(R.id.error);
-		if (picture.getUploaded()) {
-			errorImageView.setVisibility(View.INVISIBLE);
+		if (media.getUploaded()) {
+            errorImageView.setImageResource(android.R.drawable.presence_online);
 		} else {
-			errorImageView.setVisibility(View.VISIBLE);
+            errorImageView.setImageResource(android.R.drawable.presence_invisible);
 		}
 
 		return view;

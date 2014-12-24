@@ -36,19 +36,20 @@
     </PreferenceCategory>
 
 
-        <PreferenceCategory
-            android:title="@string/info_conf"
-            android:key="info_conf">
+    <PreferenceCategory
+        android:title="@string/info_conf"
+        android:key="info_conf">
 
-            <Preference android:title="@string/journal_title"
-                        android:key="uploadJournalPref">
-                <intent
-                    android:action="android.intent.action.VIEW"
-                    android:targetPackage="fr.s13d.photobackup"
-                    android:targetClass="fr.s13d.photobackup.PBJournalActivity"/>
-            </Preference>
+        <Preference android:title="@string/journal_title"
+                    android:key="uploadJournalPref">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetPackage="fr.s13d.photobackup"
+                android:targetClass="fr.s13d.photobackup.PBJournalActivity"/>
+        </Preference>
+    </PreferenceCategory>
 
-        </PreferenceCategory>
+
 <!--
         <PreferenceCategory
             android:title="@string/device_conf"

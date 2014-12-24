@@ -3,34 +3,27 @@
     android:id="@+id/list_image"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:padding="4dip" >
+    android:padding="5dip" >
 
     <!-- Thumbnail image on the left -->
     <ImageView
+        android:contentDescription="@string/thumbnail_description"
         android:id="@+id/thumbnail"
         android:layout_width="50dip"
         android:layout_height="50dip"
         android:layout_centerVertical="true"
-        android:contentDescription="@string/thumbnail_description"
-         />
-    <!-- android:src="@drawable/device_access_time" -->
+        android:src="@android:drawable/stat_sys_warning" />
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:indeterminate="true"
-        android:layout_centerVertical="true" />
-    
     <ImageView
         android:id="@+id/error"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:layout_margin="5dp"
+        android:layout_margin="15dp"
         android:contentDescription="@string/thumbnail_description"
-        android:src="@drawable/alerts_and_states_error" />
+        android:src="@android:drawable/presence_online" />
 
     <TextView
         android:id="@+id/filename"
@@ -39,8 +32,9 @@
         android:layout_centerVertical="true"
         android:layout_marginLeft="8dip"
         android:layout_marginRight="8dip"
-        android:layout_toLeftOf="@id/error"
+        android:layout_toEndOf="@id/thumbnail"
         android:layout_toRightOf="@id/thumbnail"
-        android:textAppearance="@android:style/TextAppearance.Small" />
+        android:textAppearance="@android:style/TextAppearance.Small"
+        android:text="Name of the picture" />
 
 </RelativeLayout>

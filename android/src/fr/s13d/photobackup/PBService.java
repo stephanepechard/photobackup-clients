@@ -25,12 +25,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.ContentObserver;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
-import android.provider.MediaStore.MediaColumns;
 import android.support.v4.app.NotificationCompat;
 import android.widget.Toast;
 
@@ -55,9 +52,10 @@ import java.net.SocketTimeoutException;
 public class PBService extends Service {
 
 	private static final String LOG_TAG = "PBService";
-    private static SharedPreferences sharedPreferences;
+    private static SharedPreferences defaultPreferences;
+    private static MediaContentObserver newMediaContentObserver;
     private static PBService self;
-    private MediaContentObserver newMediaContentObserver;
+    private static PBMediaStore mediaStore;
 
 
 	public PBService() {
@@ -73,10 +71,11 @@ public class PBService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        mediaStore = new PBMediaStore(this);
         newMediaContentObserver = new MediaContentObserver();
         this.getApplicationContext().getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, newMediaContentObserver);
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        defaultPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         Toast.makeText(this, "PhotoBackup service has started.", Toast.LENGTH_SHORT).show();
         Log.i(LOG_TAG, "start PhotoBackup service");
@@ -88,6 +87,8 @@ public class PBService extends Service {
         super.onDestroy();
         this.getApplicationContext().getContentResolver()
                 .unregisterContentObserver(newMediaContentObserver);
+        mediaStore.close();
+
         Toast.makeText(this, "PhotoBackup service has stopped.", Toast.LENGTH_SHORT).show();
         Log.i(LOG_TAG, "stop PhotoBackup service");
     }
@@ -115,13 +116,10 @@ public class PBService extends Service {
         @Override
         public void onChange(boolean selfChange) {
             super.onChange(selfChange);
-            PBPicture picture = readFromMediaStore(getApplicationContext(),
-                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            Log.d(LOG_TAG, "detected picture: " + picture.toString());
-
+            Log.i(LOG_TAG, "MediaContentObserver:onChange()");
             try {
-                addPhotoToQueue(picture.getFile().getAbsolutePath());
-                picture.save();
+                mediaStore.markMediaForUpload(mediaStore.getLastMediaInStore());
+                //postPhoto(fullPath);
             }
             catch (Exception e) {
                 PBService.this.notify("Error", "onChange" + e.toString());
@@ -130,15 +128,10 @@ public class PBService extends Service {
     }
 
 
-    private void addPhotoToQueue(final String fullPath) {
-        postPhoto(fullPath);
-    }
-
-
 	private void postPhoto(final String path) {
 		// get the user preferences
-		String serverUrl = sharedPreferences.getString(PBSettingsFragment.PREF_SERVER_URL, "");
-		String serverHash = sharedPreferences.getString(PBSettingsFragment.PREF_SERVER_PASS_HASH, "");
+		String serverUrl = defaultPreferences.getString(PBSettingsFragment.PREF_SERVER_URL, "");
+		String serverHash = defaultPreferences.getString(PBSettingsFragment.PREF_SERVER_PASS_HASH, "");
 
 		// create a new HttpClient
 		int timeout = 5000; // in milliseconds
@@ -150,11 +143,11 @@ public class PBService extends Service {
 
 		// create the request
 		MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-		File upfile = new File(path);
+		File upFile = new File(path);
 		long uploaded = 0;
 		try {
 			entity.addPart("server_pass", new StringBody(serverHash));
-			entity.addPart("upfile", new FileBody(upfile));
+			entity.addPart("upFile", new FileBody(upFile));
 			httpPost.setEntity(entity);
 			HttpResponse response = httpClient.execute(httpPost);
 			if (response != null) {
@@ -193,19 +186,6 @@ public class PBService extends Service {
         notificationManager.notify(0, builder.build());
     }
 
-
-    private PBPicture readFromMediaStore(Context context, Uri uri) {
-        Cursor cursor = context.getContentResolver().query(
-                uri, null, null, null, "date_added DESC");
-        PBPicture picture = null;
-        if (cursor.moveToNext()) {
-            int dataColumn = cursor.getColumnIndexOrThrow(MediaColumns.DATA);
-            String filePath = cursor.getString(dataColumn);
-            picture = new PBPicture(new File(filePath));
-        }
-        cursor.close();
-        return picture;
-    }
 
 	@Override
 	public IBinder onBind(final Intent intent) {
