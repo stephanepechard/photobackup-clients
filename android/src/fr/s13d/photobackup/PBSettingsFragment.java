@@ -68,7 +68,7 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             preferenceScreen.removePreference(preferenceCategory);
         } else {
             final Preference pref = findPreference("uploadJournalPref");
-            pref.setTitle(pref.getTitle() + "(" + nbPicture + ")");
+            pref.setTitle(pref.getTitle() + " (" + nbPicture + ")");
         }
 	}
 

@@ -70,13 +70,15 @@ public class PBJournalAdapter extends BaseAdapter {
             textView.setText("Error on picture data");
         }
 
-		// error
-		ImageView errorImageView = (ImageView)view.findViewById(R.id.error);
-		if (media.getUploaded()) {
-            errorImageView.setImageResource(android.R.drawable.presence_online);
-		} else {
-            errorImageView.setImageResource(android.R.drawable.presence_invisible);
-		}
+		// indicator
+		ImageView imageView = (ImageView)view.findViewById(R.id.state);
+        if (media.getState() == PBMedia.PBMediaState.WAITING) {
+            imageView.setImageResource(android.R.drawable.presence_away);
+        } else if (media.getState() == PBMedia.PBMediaState.SYNCED) {
+            imageView.setImageResource(android.R.drawable.presence_online);
+        } else if (media.getState() == PBMedia.PBMediaState.ERROR) {
+            imageView.setImageResource(android.R.drawable.presence_busy);
+        }
 
 		return view;
 	}

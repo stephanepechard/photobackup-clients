@@ -20,7 +20,6 @@ public class PBMediaStore {
     private static final Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
     private static final String PhotoBackupPicturesSharedPreferences = "PhotoBackupPicturesSharedPreferences";
 
-
     public PBMediaStore(Context theContext) {
         context = theContext;
         picturesPreferences = context.getSharedPreferences(PhotoBackupPicturesSharedPreferences, Context.MODE_PRIVATE);
@@ -30,7 +29,9 @@ public class PBMediaStore {
 
 
     public void close() {
-        idCursor.close();
+        if(idCursor != null && !idCursor.isClosed()) {
+            idCursor.close();
+        }
         picturesPreferences = null;
         picturesSharedPreferences = null;
     }
@@ -44,7 +45,7 @@ public class PBMediaStore {
 
     public void markMediaForUpload(PBMedia media) {
         Log.i(LOG_TAG, "markMediaForUpload: " + media);
-        picturesSharedPreferences.putBoolean(String.valueOf(media.getId()), Boolean.FALSE).commit();
+        picturesSharedPreferences.putString(String.valueOf(media.getId()), PBMedia.PBMediaState.LOCAL.name()).commit();
     }
 
 
@@ -53,10 +54,20 @@ public class PBMediaStore {
         PBMedia picture = null;
         if (id != 0) {
             final Cursor cursor = context.getContentResolver().query(uri, null, "_id = " + id, null, null);
-            if (cursor.moveToFirst()) {
+            if (cursor != null && cursor.moveToFirst()) {
                 picture = new PBMedia(cursor);
-                Boolean bool = picturesPreferences.getBoolean(String.valueOf(picture.getId()), Boolean.FALSE);
-                picture.setUploaded(bool);
+
+                try {
+                    String stateString = picturesPreferences.getString(String.valueOf(picture.getId()), PBMedia.PBMediaState.LOCAL.name());
+                    picture.setState(PBMedia.PBMediaState.valueOf(stateString));
+                }
+                catch (java.lang.ClassCastException e) {
+                    Log.e(LOG_TAG, "Explosion!!");
+                }
+            }
+
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
             }
         }
 

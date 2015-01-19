@@ -6,13 +6,14 @@ import java.io.Serializable;
 
 public class PBMedia implements Serializable {
     private final static String LOG_TAG = "PBMedia";
-    private int id;
-    private int width;
-    private int height;
-    private int orientation;
-    private String path;
-    private String timestamp;
-    private Boolean uploaded;
+    final private int id;
+    final private int width;
+    final private int height;
+    final private int orientation;
+    final private String path;
+    final private String timestamp;
+    private PBMediaState state;
+    public enum PBMediaState { WAITING, SYNCED, ERROR }
 
 
     //////////////////
@@ -25,7 +26,7 @@ public class PBMedia implements Serializable {
         this.width = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("width"));
         this.height = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("height"));
         this.orientation = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("orientation"));
-        this.uploaded = Boolean.FALSE;
+        this.state = PBMediaState.WAITING;
     }
 
 
@@ -37,11 +38,6 @@ public class PBMedia implements Serializable {
     @Override
     public String toString() {
         return "PBMedia: " + this.path;
-    }
-
-
-    public void uploadDidSucceed() {
-        this.uploaded = Boolean.TRUE;
     }
 
 
@@ -58,18 +54,13 @@ public class PBMedia implements Serializable {
     }
 
 
-    public String getTimestamp() {
-        return this.timestamp;
+    public PBMediaState getState() {
+        return this.state;
     }
 
 
-    public Boolean getUploaded() {
-        return this.uploaded;
-    }
-
-
-    public void setUploaded(Boolean uploaded) {
-        this.uploaded = uploaded;
+    public void setState(PBMediaState mediaState) {
+        this.state = mediaState;
     }
 
 }

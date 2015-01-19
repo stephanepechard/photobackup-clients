@@ -119,6 +119,7 @@ public class PBService extends Service {
             Log.i(LOG_TAG, "MediaContentObserver:onChange()");
             try {
                 mediaStore.markMediaForUpload(mediaStore.getLastMediaInStore());
+                Toast.makeText(self, "Media ready for upload.", Toast.LENGTH_SHORT).show();
                 //postPhoto(fullPath);
             }
             catch (Exception e) {

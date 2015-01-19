@@ -36,7 +36,7 @@ public class PBActivity extends Activity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.config, menu);
+        // TODO getMenuInflater().inflate(R.menu.config, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
