@@ -33,8 +33,20 @@ import android.preference.SwitchPreference;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicNameValuePair;
+
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class PBSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -193,6 +205,42 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
         }
 
         return true;
+    }
+
+
+    private boolean testServer(String serverUrl, String serverPassHash) {
+
+        Toast.makeText(getActivity(), "Testing server", Toast.LENGTH_SHORT).show();
+
+        boolean testAnswer = false;
+        HttpClient httpclient = new DefaultHttpClient();
+        HttpPost httppost = new HttpPost(serverUrl + "/test");
+
+        try {
+            // Add data
+            List<NameValuePair> nameValuePairs = new ArrayList<>(1);
+            nameValuePairs.add(new BasicNameValuePair("server_pass", serverPassHash));
+            httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
+
+            // Execute HTTP Post Request
+            HttpResponse response = httpclient.execute(httppost);
+
+            if (response.getStatusLine().getStatusCode() == 200) {
+                Toast.makeText(getActivity(), "Test succeeded :-)", Toast.LENGTH_SHORT).show();
+                testAnswer = true;
+            }
+            else {
+                Toast.makeText(getActivity(), "Test failed :-(", Toast.LENGTH_SHORT).show();
+            }
+
+        } catch (ClientProtocolException e) {
+            Toast.makeText(getActivity(), "ClientProtocolException while testing server :-(", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        } catch (IOException e) {
+            Toast.makeText(getActivity(), "IOException while testing server :-(", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+        return testAnswer;
     }
 
 
