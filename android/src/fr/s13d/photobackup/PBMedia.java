@@ -26,7 +26,7 @@ public class PBMedia implements Serializable {
         this.width = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("width"));
         this.height = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("height"));
         this.orientation = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("orientation"));
-        this.state = PBMediaState.WAITING;
+        this.state = null;
     }
 
 
@@ -53,14 +53,15 @@ public class PBMedia implements Serializable {
         return this.path;
     }
 
-
+/*
     public PBMediaState getState() {
         return this.state;
     }
 
 
     public void setState(PBMediaState mediaState) {
+        String stateString = picturesPreferences.getString(String.valueOf(media.getId()), PBMedia.PBMediaState.WAITING.name());
         this.state = mediaState;
-    }
+    }*/
 
 }

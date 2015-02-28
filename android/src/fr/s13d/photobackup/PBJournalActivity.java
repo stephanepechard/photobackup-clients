@@ -1,15 +1,62 @@
 package fr.s13d.photobackup;
 
-        import android.app.ListActivity;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.ListActivity;
+import android.content.DialogInterface;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.Toast;
+
+import java.util.List;
+
 
 public class PBJournalActivity extends ListActivity {
+
+    private static final String LOG_TAG = "PBJournalActivity";
+    private final List<PBMedia> medias;
+
+
+    public PBJournalActivity() {
+        medias = PBActivity.mediaStore.getMedias();
+    }
+
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_journal);
 
+        // on click listener
+        final Activity self = this;
+        ListView listView = (ListView)findViewById(android.R.id.list);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                final PBMedia media = medias.get(position);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(self);
+                builder.setMessage("You can backup this picture now!").setTitle("Manual backup");
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        Toast.makeText(self, "Send " + media.getPath(), Toast.LENGTH_SHORT).show();
+                        PBMediaSender.send(self, media);
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        //Toast.makeText(self, "Send " + media.toString(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        });
+
+        // adapter
         PBJournalAdapter adapter = new PBJournalAdapter(this);
         setListAdapter(adapter);
     }

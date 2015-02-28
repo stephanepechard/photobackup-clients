@@ -16,12 +16,12 @@ import java.util.List;
 
 
 public class PBJournalAdapter extends BaseAdapter {
-    private final List<String> medias;
+    private final List<PBMedia> medias;
 	private static LayoutInflater inflater;
 	private Resources resources = null;
 
 	public PBJournalAdapter(Activity activity) {
-        medias = PBActivity.mediaStore.getMediaIds();
+        medias = PBActivity.mediaStore.getMedias();
 		resources = activity.getResources();
 		inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 	}
@@ -47,11 +47,13 @@ public class PBJournalAdapter extends BaseAdapter {
 		if(view == null) {
 			view = inflater.inflate(R.layout.list_row, null);
 		}
-        String mediaIdString = medias.get(position);
-        int mediaId = Integer.parseInt(mediaIdString);
-        PBMedia media = PBActivity.mediaStore.getMedia(mediaId);
+        PBMedia media = medias.get(position);
+        if (media == null) {
+            Log.w("PBJournalAdapter", "media is null");
+            return view;
+        }
 
-		// thumbnail
+        // thumbnail
 		ImageView thumbImageView = (ImageView)view.findViewById(R.id.thumbnail);
 		if (BitmapWorkerTask.cancelPotentialWork(media.getPath(), thumbImageView)) {
 			final BitmapWorkerTask task = new BitmapWorkerTask(thumbImageView, resources, view);
@@ -71,14 +73,14 @@ public class PBJournalAdapter extends BaseAdapter {
         }
 
 		// indicator
-		ImageView imageView = (ImageView)view.findViewById(R.id.state);
+		/*ImageView imageView = (ImageView)view.findViewById(R.id.state);
         if (media.getState() == PBMedia.PBMediaState.WAITING) {
             imageView.setImageResource(android.R.drawable.presence_away);
         } else if (media.getState() == PBMedia.PBMediaState.SYNCED) {
             imageView.setImageResource(android.R.drawable.presence_online);
         } else if (media.getState() == PBMedia.PBMediaState.ERROR) {
             imageView.setImageResource(android.R.drawable.presence_busy);
-        }
+        }*/
 
 		return view;
 	}
