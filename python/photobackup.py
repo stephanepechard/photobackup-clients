@@ -29,8 +29,7 @@ term = Terminal()
 def password():
     """ Ask the password of the server. """
     password = getpass.getpass(prompt='The server password: ')
-    return { 'server_pass':
-             hashlib.sha512(password.encode('utf-8')).hexdigest() }
+    return { 'password': hashlib.sha512(password.encode('utf-8')).hexdigest() }
 
 
 def response(status_code):
