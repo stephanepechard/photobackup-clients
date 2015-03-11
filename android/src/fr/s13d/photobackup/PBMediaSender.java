@@ -5,12 +5,14 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 
 import com.loopj.android.http.AsyncHttpClient;
 import com.loopj.android.http.AsyncHttpResponseHandler;
 import com.loopj.android.http.RequestParams;
+import com.loopj.android.http.SyncHttpClient;
 
 import org.apache.http.Header;
 
@@ -20,8 +22,9 @@ import java.io.FileNotFoundException;
 
 public class PBMediaSender {
 
-    private final static String LOG_TAG = "PBMediaSenderTask";
-    private static AsyncHttpClient client = new AsyncHttpClient();
+    private final static String LOG_TAG = "PBMediaSender";
+    private static AsyncHttpClient syncHttpClient= new SyncHttpClient();
+    private static AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
 
 
     static public void send(final Context context, final PBMedia media) {
@@ -38,24 +41,29 @@ public class PBMediaSender {
             e.printStackTrace();
         }
 
-        client.post(serverUrl, params, new AsyncHttpResponseHandler() {
+        getClient().post(serverUrl, params, new AsyncHttpResponseHandler() {
 
             @Override
             public void onStart() {
                 // called before request is started
-                Log.e(LOG_TAG, "onStart");
+                Log.i(LOG_TAG, "onStart");
             }
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] response) {
                 // called when response HTTP status is "200 OK"
-                Log.e(LOG_TAG, "onSuccess");
+                Log.i(LOG_TAG, "onSuccess");
+            }
+
+            @Override
+            public void onProgress(int bytesWritten, int totalSize) {
+                Log.i(LOG_TAG, "onProgress: " + ((100*bytesWritten) / totalSize) + "%");
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
                 // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                Log.e(LOG_TAG, "onFailure");
+                Log.i(LOG_TAG, "onFailure");
                 e.printStackTrace();
             }
 
@@ -74,4 +82,14 @@ public class PBMediaSender {
         final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         notificationManager.notify(0, builder.build());
     }
+
+
+    // @return an async client when calling from the main thread, otherwise a sync client.
+    private static AsyncHttpClient getClient() {
+        // Return the synchronous HTTP client when the thread is not prepared
+        if (Looper.myLooper() == null)
+            return syncHttpClient;
+        return asyncHttpClient;
+    }
+
 }

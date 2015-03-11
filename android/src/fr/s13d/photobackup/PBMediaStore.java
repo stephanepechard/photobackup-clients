@@ -15,34 +15,24 @@ import java.util.Map;
 public class PBMediaStore {
 
     private static final String LOG_TAG = "PBMediaStore";
-    private static Cursor idCursor;
     private static Context context;
     private static SharedPreferences picturesPreferences;
     private static SharedPreferences.Editor picturesPreferencesEditor;
     private static final Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
     private static final String PhotoBackupPicturesSharedPreferences = "PhotoBackupPicturesSharedPreferences";
 
+
     public PBMediaStore(Context theContext) {
         context = theContext;
         picturesPreferences = context.getSharedPreferences(PhotoBackupPicturesSharedPreferences, Context.MODE_PRIVATE);
         picturesPreferencesEditor = picturesPreferences.edit();
-        updateStore();
+        syncPreferences();
     }
 
 
     public void close() {
-        if(idCursor != null && !idCursor.isClosed()) {
-            idCursor.close();
-        }
         picturesPreferences = null;
         picturesPreferencesEditor = null;
-    }
-
-
-    private void updateStore() {
-        final String[] projection = new String[] { "_id" };
-        idCursor = context.getContentResolver().query(uri, projection, null, null, "date_added DESC");
-        syncPreferences();
     }
 
 
@@ -57,6 +47,11 @@ public class PBMediaStore {
             if (cursor == null || !cursor.moveToFirst()) {
                 Log.d(LOG_TAG, "Remove media " + key + " from preference");
                 picturesPreferencesEditor.remove(key);
+            }
+            try {
+                cursor.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
     }
@@ -81,7 +76,7 @@ public class PBMediaStore {
                     setMediaState(media, PBMedia.PBMediaState.SYNCED);
                     //media.setState(PBMedia.PBMediaState.valueOf(stateString));
                 }
-                catch (java.lang.ClassCastException e) {
+                catch (Exception e) {
                     Log.e(LOG_TAG, "Explosion!!");
                 }
             }
@@ -111,9 +106,12 @@ public class PBMediaStore {
 
     public PBMedia getLastMediaInStore() {
         int id = 0;
-        if (idCursor.moveToFirst()) {
-            int idColumn = idCursor.getColumnIndexOrThrow("_id");
-            id = idCursor.getInt(idColumn);
+        final String[] projection = new String[] { "_id" };
+        final Cursor cursor = context.getContentResolver().query(uri, projection, null, null, "date_added DESC");
+        if (cursor != null && cursor.moveToFirst()) {
+            int idColumn = cursor.getColumnIndexOrThrow("_id");
+            id = cursor.getInt(idColumn);
+            cursor.close();
         }
         return getMedia(id);
     }

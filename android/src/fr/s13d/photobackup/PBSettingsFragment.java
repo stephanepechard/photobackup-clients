@@ -106,7 +106,6 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
 
     @Override
     public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
-        Log.i(LOG_TAG, "onSharedPreferenceChanged for: " + key);
 
         if (key.equals(PREF_SERVICE_RUNNING)) {
             Log.i(LOG_TAG, "PREF_SERVICE_RUNNING = " + sharedPreferences.getBoolean(PREF_SERVICE_RUNNING, false));

@@ -21,6 +21,7 @@ package fr.s13d.photobackup;
 import android.app.Service;
 import android.content.Intent;
 import android.database.ContentObserver;
+import android.net.Uri;
 import android.os.IBinder;
 import android.provider.MediaStore;
 import android.widget.Toast;
@@ -46,13 +47,12 @@ public class PBService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-
         newMediaContentObserver = new MediaContentObserver();
         this.getApplicationContext().getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, newMediaContentObserver);
 
-        Toast.makeText(this, "PhotoBackup service has started.", Toast.LENGTH_SHORT).show();
-        Log.i(LOG_TAG, "start PhotoBackup service");
+        Toast.makeText(this, "PhotoBackup service is created.", Toast.LENGTH_SHORT).show();
+        Log.i(LOG_TAG, "PhotoBackup service is created");
     }
 
 
@@ -63,7 +63,7 @@ public class PBService extends Service {
                 .unregisterContentObserver(newMediaContentObserver);
 
         Toast.makeText(this, "PhotoBackup service has stopped.", Toast.LENGTH_SHORT).show();
-        Log.i(LOG_TAG, "stop PhotoBackup service");
+        Log.i(LOG_TAG, "PhotoBackup service has stopped");
     }
 
 
@@ -73,6 +73,7 @@ public class PBService extends Service {
 
         if (intent != null) { // explicitly launch by the user
             Toast.makeText(this, "PhotoBackup service has started.", Toast.LENGTH_SHORT).show();
+            Log.i(LOG_TAG, "PhotoBackup service has started");
         }
 
         return START_STICKY;
@@ -88,19 +89,28 @@ public class PBService extends Service {
 
         @Override
         public void onChange(boolean selfChange) {
+            onChange(selfChange, null);
+        }
+
+        @Override
+        public void onChange(boolean selfChange, Uri uri) {
             super.onChange(selfChange);
             Log.i(LOG_TAG, "MediaContentObserver:onChange()");
 
-            try {
+            if (uri.toString().equals("content://media/external/images/media")) {
                 PBMediaStore mediaStore = new PBMediaStore(self);
-                PBMedia mediaToUpload = mediaStore.getLastMediaInStore();
-                mediaStore.close();
-                PBMediaSender.send(self, mediaToUpload);
-                //mediaStore.markMediaForUpload(mediaToUpload);
-            }
-            catch (Exception e) {
-                Toast.makeText(self, "Upload failed :-(", Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
+                try {
+
+                    PBMedia mediaToUpload = mediaStore.getLastMediaInStore();
+                    mediaStore.close();
+                    PBMediaSender.send(self, mediaToUpload);
+                    //mediaStore.markMediaForUpload(mediaToUpload);
+                }
+                catch (Exception e) {
+                    Log.e(LOG_TAG, "Upload failed :-(");
+                    //Toast.makeText(self, "Upload failed :-(", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
+                }
             }
         }
     }
