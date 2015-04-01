@@ -8,10 +8,8 @@
     <string name="service_state_not_running">PhotoBackup is not running.</string>
 
     <string name="server_conf">Server configuration</string>
-
     <string name="server_url_title">Server address</string>
-    <string name="server_url_summary">The address where your pictures are posted.</string>
-
+    <string name="server_url_summary">The address of the server.</string>
     <string name="server_password_title">Server password</string>
     <string name="server_password_summary">The password of the server.</string>
     <string name="server_password_summary_set">The password is set.</string>
@@ -19,23 +17,26 @@
     <string name="info_conf">Informations</string>
     
     <string name="journal_title">Upload journal</string>
-    
-    <string name="device_conf">Device configuration</string>
 
-    <string name="only_wifi_title">Network use</string>
-    <string name="only_wifi">Backup on wifi only</string>
-    <string name="not_only_wifi">Backup on wifi and data network</string>
+    <string name="error_uploadfailed">Photo backup failed :-(</string>
+
+    <string name="thumbnail_description">Thumbnail of the photo</string>
+    <string name="journal_backedup">Backed up</string>
+    <string name="journal_waiting">Waiting</string>
+    <string name="journal_error">Error</string>
+
+    <string name="menu_all_pictures">Backup all photos</string>
+    <string name="menu_test_server">Test server</string>
+
+    <string name="name">Name of the photo</string>
 
     <string name="toast_urisyntaxexception">The server address is invalid!</string>
     <string name="toast_serverpassempty">The password cannot be empty!</string>
-    
-    <string name="error_nopicturedirectory">I couldn\'t find your pictures!\nSorry :-(</string>
-    <string name="error_uploadfailed">Upload failed</string>
-    <string name="error_not200">Bad server response!</string>
-    <string name="error_timeout">Server took too long to respond!</string>
-    <string name="error_noresponse">Server seems asleep&#8230;</string>
-    <string name="error_protocol">Transmission error&#8230;</string>
-    
-    <string name="thumbnail_description">Thumbnail of the image</string>
+
+    <string name="notif_start_title">Ongoing photo backup</string>
+    <string name="notif_start_text">Your photo is on your server.</string>
+    <string name="notif_success_title">Photo backup success!</string>
+    <string name="toast_configuration_ok">Server configuration is OK.</string>
+    <string name="toast_configuration_ko">Server test failed, please verify your configuration.</string>
 
 </resources>

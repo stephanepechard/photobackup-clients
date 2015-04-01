@@ -35,6 +35,6 @@
         android:layout_toEndOf="@id/thumbnail"
         android:layout_toRightOf="@id/thumbnail"
         android:textAppearance="@android:style/TextAppearance.Small"
-        android:text="Name of the picture" />
+        android:text="@string/name" />
 
 </RelativeLayout>

@@ -3,6 +3,11 @@
     <item
         android:id="@+id/action_upload_history"
         android:icon="@android:drawable/ic_media_rew"
-        android:title="Upload all pictures"/>
+        android:title="@string/menu_all_pictures"/>
+
+    <item
+        android:id="@+id/action_test_server"
+        android:icon="@android:drawable/ic_menu_help"
+        android:title="@string/menu_test_server" />
 
 </menu>

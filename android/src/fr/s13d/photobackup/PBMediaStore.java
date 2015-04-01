@@ -19,7 +19,7 @@ public class PBMediaStore {
     private static SharedPreferences picturesPreferences;
     private static SharedPreferences.Editor picturesPreferencesEditor;
     private static final Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-    private static final String PhotoBackupPicturesSharedPreferences = "PhotoBackupPicturesSharedPreferences";
+    public static final String PhotoBackupPicturesSharedPreferences = "PhotoBackupPicturesSharedPreferences";
 
 
     public PBMediaStore(Context theContext) {
@@ -42,16 +42,15 @@ public class PBMediaStore {
         Map<String, ?> mediasMap = context.getSharedPreferences(PhotoBackupPicturesSharedPreferences,
                 Context.MODE_PRIVATE).getAll();
         for (String key : new ArrayList<>(mediasMap.keySet())) {
-            int mediaId = Integer.parseInt(key);
+            final int mediaId = Integer.parseInt(key);
             final Cursor cursor = context.getContentResolver().query(uri, null, "_id = " + mediaId, null, null);
-            if (cursor == null || !cursor.moveToFirst()) {
+            final PBMedia media = this.getMedia(mediaId);
+            if (cursor == null || !cursor.moveToFirst() || media == null || media.getPath().isEmpty()) {
                 Log.d(LOG_TAG, "Remove media " + key + " from preference");
-                picturesPreferencesEditor.remove(key);
+                picturesPreferencesEditor.remove(key).commit();
             }
-            try {
+            if (cursor != null && !cursor.isClosed()) {
                 cursor.close();
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
     }
@@ -69,12 +68,12 @@ public class PBMediaStore {
         if (id != 0) {
             final Cursor cursor = context.getContentResolver().query(uri, null, "_id = " + id, null, null);
             if (cursor != null && cursor.moveToFirst()) {
-                media = new PBMedia(cursor);
+                media = new PBMedia(context, cursor);
 
                 try {
                     String stateString = picturesPreferences.getString(String.valueOf(media.getId()), PBMedia.PBMediaState.WAITING.name());
                     setMediaState(media, PBMedia.PBMediaState.SYNCED);
-                    //media.setState(PBMedia.PBMediaState.valueOf(stateString));
+                    media.setState(PBMedia.PBMediaState.valueOf(stateString));
                 }
                 catch (Exception e) {
                     Log.e(LOG_TAG, "Explosion!!");

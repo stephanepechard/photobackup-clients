@@ -1,5 +1,7 @@
 package fr.s13d.photobackup;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 
 import java.io.Serializable;
@@ -7,11 +9,7 @@ import java.io.Serializable;
 public class PBMedia implements Serializable {
     private final static String LOG_TAG = "PBMedia";
     final private int id;
-    final private int width;
-    final private int height;
-    final private int orientation;
     final private String path;
-    final private String timestamp;
     private PBMediaState state;
     public enum PBMediaState { WAITING, SYNCED, ERROR }
 
@@ -19,14 +17,14 @@ public class PBMedia implements Serializable {
     //////////////////
     // Constructors //
     //////////////////
-    public PBMedia(Cursor mediaCursor) {
+    public PBMedia(Context context, Cursor mediaCursor) {
         this.id = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("_id"));
         this.path = mediaCursor.getString(mediaCursor.getColumnIndexOrThrow("_data"));
-        this.timestamp = mediaCursor.getString(mediaCursor.getColumnIndexOrThrow("date_added"));
-        this.width = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("width"));
-        this.height = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("height"));
-        this.orientation = mediaCursor.getInt(mediaCursor.getColumnIndexOrThrow("orientation"));
-        this.state = null;
+
+        // Find state from the shared preferences
+        SharedPreferences preferences = context.getSharedPreferences(PBMediaStore.PhotoBackupPicturesSharedPreferences, Context.MODE_PRIVATE);
+        String stateString = preferences.getString(String.valueOf(this.id), PBMedia.PBMediaState.WAITING.name());
+        this.state = PBMedia.PBMediaState.valueOf(stateString);
     }
 
 
@@ -48,20 +46,16 @@ public class PBMedia implements Serializable {
         return this.id;
     }
 
-
     public String getPath() {
         return this.path;
     }
 
-/*
     public PBMediaState getState() {
         return this.state;
     }
 
-
     public void setState(PBMediaState mediaState) {
-        String stateString = picturesPreferences.getString(String.valueOf(media.getId()), PBMedia.PBMediaState.WAITING.name());
         this.state = mediaState;
-    }*/
+    }
 
 }

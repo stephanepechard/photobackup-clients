@@ -33,20 +33,8 @@ import android.preference.SwitchPreference;
 import android.webkit.URLUtil;
 import android.widget.Toast;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
-
-import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class PBSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
@@ -91,7 +79,6 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
         if (defaultPreferences != null) {
             defaultPreferences.registerOnSharedPreferenceChangeListener(this);
         }
-
     }
 
 
@@ -109,60 +96,14 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
 
         if (key.equals(PREF_SERVICE_RUNNING)) {
             Log.i(LOG_TAG, "PREF_SERVICE_RUNNING = " + sharedPreferences.getBoolean(PREF_SERVICE_RUNNING, false));
-
-            // Start/Stop the service
-            if (sharedPreferences.getBoolean(PREF_SERVICE_RUNNING, false)) {
-                if (validateSettings()) {
-                    final Intent serviceIntent = new Intent(getActivity(), PBService.class);
-                    getActivity().startService(serviceIntent);
-                } else {
-                    final SwitchPreference switchPreference = (SwitchPreference) findPreference(PREF_SERVICE_RUNNING);
-                    switchPreference.setChecked(false);
-                }
-            } else {
-                if (isPhotoBackupServiceRunning()) {
-                    PBService service = PBService.getInstance();
-                    if (service != null) {
-                        Log.i(LOG_TAG, "stop PhotoBackup service");
-                        service.stopSelf();
-                    }
-                }
-            }
+            this.startOrStopService(sharedPreferences);
 
         } else if (key.equals(PREF_SERVER_URL)) {
             final EditTextPreference textPreference = (EditTextPreference) findPreference(PREF_SERVER_URL);
             textPreference.setSummary(sharedPreferences.getString(PREF_SERVER_URL, ""));
 
         } else if (key.equals(PREF_SERVER_PASS)) {
-            // store only the hash of the password in the preferences
-            if (!hashIsComputed) {
-                final String pass = sharedPreferences.getString(PREF_SERVER_PASS, "");
-
-                try {
-                    // compute the hash
-                    MessageDigest md = MessageDigest.getInstance("SHA-512");
-                    md.update(pass.getBytes());
-                    byte[] mb = md.digest();
-                    String hash = "";
-                    for (byte temp : mb) {
-                        String s = Integer.toHexString(temp);
-                        while (s.length() < 2) {
-                            s = "0" + s;
-                        }
-                        s = s.substring(s.length() - 2);
-                        hash += s;
-                    }
-
-                    // set the hash in the preferences
-                    defaultSharedPreferences.putString(PREF_SERVER_PASS_HASH, hash);
-                    defaultSharedPreferences.commit();
-
-                } catch (NoSuchAlgorithmException e) {
-                    Log.e(LOG_TAG, "ERROR: " + e.getMessage());
-                }
-            } else {
-                hashIsComputed = false;
-            }
+            this.createAndSetServerPass(sharedPreferences);
 
             // update fragment
             final String serverPassHash = sharedPreferences.getString(PREF_SERVER_PASS_HASH, "");
@@ -183,10 +124,32 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
         } else if (key.equals(PREF_ONLY_WIFI)) {
             // Allow the user not to use the mobile network to upload the pictures
             Toast.makeText(getActivity(), "This has no effect for the moment :-)", Toast.LENGTH_SHORT).show();
-
             // TODO: implement
+        } else if (sharedPreferences == null) {
+            Log.e(LOG_TAG, "Error: sharedPreferences == null");
         }
 
+    }
+
+
+    private void startOrStopService(final SharedPreferences sharedPreferences) {
+        if (sharedPreferences.getBoolean(PREF_SERVICE_RUNNING, false)) {
+            if (validateSettings()) {
+                final Intent serviceIntent = new Intent(getActivity(), PBService.class);
+                getActivity().startService(serviceIntent);
+            } else {
+                final SwitchPreference switchPreference = (SwitchPreference) findPreference(PREF_SERVICE_RUNNING);
+                switchPreference.setChecked(false);
+            }
+        } else {
+            if (isPhotoBackupServiceRunning()) {
+                PBService service = PBService.getInstance();
+                if (service != null) {
+                    Log.i(LOG_TAG, "stop PhotoBackup service");
+                    service.stopSelf();
+                }
+            }
+        }
     }
 
 
@@ -207,42 +170,6 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
     }
 
 
-    private boolean testServer(String serverUrl, String serverPassHash) {
-
-        Toast.makeText(getActivity(), "Testing server", Toast.LENGTH_SHORT).show();
-
-        boolean testAnswer = false;
-        HttpClient httpclient = new DefaultHttpClient();
-        HttpPost httppost = new HttpPost(serverUrl + "/test");
-
-        try {
-            // Add data
-            List<NameValuePair> nameValuePairs = new ArrayList<>(1);
-            nameValuePairs.add(new BasicNameValuePair("server_pass", serverPassHash));
-            httppost.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-
-            // Execute HTTP Post Request
-            HttpResponse response = httpclient.execute(httppost);
-
-            if (response.getStatusLine().getStatusCode() == 200) {
-                Toast.makeText(getActivity(), "Test succeeded :-)", Toast.LENGTH_SHORT).show();
-                testAnswer = true;
-            }
-            else {
-                Toast.makeText(getActivity(), "Test failed :-(", Toast.LENGTH_SHORT).show();
-            }
-
-        } catch (ClientProtocolException e) {
-            Toast.makeText(getActivity(), "ClientProtocolException while testing server :-(", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-        } catch (IOException e) {
-            Toast.makeText(getActivity(), "IOException while testing server :-(", Toast.LENGTH_SHORT).show();
-            e.printStackTrace();
-        }
-        return testAnswer;
-    }
-
-
     // Returns the current state of the PhotoBackup Service
     // See http://stackoverflow.com/a/5921190/417006
     private boolean isPhotoBackupServiceRunning() {
@@ -255,4 +182,35 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
         return false;
     }
 
+    private void createAndSetServerPass(final SharedPreferences sharedPreferences) {
+        // store only the hash of the password in the preferences
+        if (!hashIsComputed) {
+            final String pass = sharedPreferences.getString(PREF_SERVER_PASS, "");
+
+            try {
+                // compute the hash
+                MessageDigest md = MessageDigest.getInstance("SHA-512");
+                md.update(pass.getBytes());
+                byte[] mb = md.digest();
+                String hash = "";
+                for (byte temp : mb) {
+                    String s = Integer.toHexString(temp);
+                    while (s.length() < 2) {
+                        s = "0" + s;
+                    }
+                    s = s.substring(s.length() - 2);
+                    hash += s;
+                }
+
+                // set the hash in the preferences
+                defaultSharedPreferences.putString(PREF_SERVER_PASS_HASH, hash);
+                defaultSharedPreferences.commit();
+
+            } catch (NoSuchAlgorithmException e) {
+                Log.e(LOG_TAG, "ERROR: " + e.getMessage());
+            }
+        } else {
+            hashIsComputed = false;
+        }
+    }
 }

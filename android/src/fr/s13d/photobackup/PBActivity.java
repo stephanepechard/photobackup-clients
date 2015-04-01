@@ -36,7 +36,7 @@ public class PBActivity extends Activity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // TODO getMenuInflater().inflate(R.menu.config, menu);
+        getMenuInflater().inflate(R.menu.config, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -45,6 +45,9 @@ public class PBActivity extends Activity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.action_upload_history) {
             showUploadConfirmationDialog();
+            return true;
+        } else if (item.getItemId() == R.id.action_test_server) {
+            PBMediaSender.test(this);
             return true;
         }
         return super.onOptionsItemSelected(item);

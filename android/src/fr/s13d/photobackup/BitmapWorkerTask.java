@@ -36,7 +36,7 @@ class BitmapWorkerTask extends AsyncTask<String, Void, Bitmap> {
             Bitmap fullResolutionPicture = BitmapFactory.decodeFile(picturePath);
             Bitmap thumbnailPicture;
             if (fullResolutionPicture == null) { // picture is absent
-                thumbnailPicture = BitmapFactory.decodeResource(resources, R.drawable.navigation_cancel);
+                thumbnailPicture = BitmapFactory.decodeResource(resources, android.R.drawable.ic_menu_gallery);
             } else {
                 thumbnailPicture = ThumbnailUtils.extractThumbnail(fullResolutionPicture, 90, 90);
             }
