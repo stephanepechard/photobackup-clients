@@ -16,26 +16,28 @@
     <string name="server_password_summary">Le mot de passe du serveur.</string>
     <string name="server_password_summary_set">Le mot de passe est renseigné.</string>
 
-    <string name="info_conf">Informations</string>
-    
-    <string name="journal_title">Journal d\'envoi</string>
-    
     <string name="toast_urisyntaxexception">L\'adresse du serveur est invalide !</string>
     <string name="toast_serverpassempty">Le mot de passe ne peut pas être vide !</string>
-    
-    <string name="error_uploadfailed">L\'envoi a échoué  :-(</string>
+    <string name="toast_configuration_ok">La configuration du serveur est bonne.</string>
+    <string name="toast_configuration_ko">Le test du serveur a échoué, merci de vérifier sa configuration.</string>
 
+    <string name="name">Nom de la photo</string>
+    <string name="info_conf">Informations</string>
+    <string name="error_uploadfailed">L\'envoi a échoué  :-(</string>
     <string name="thumbnail_description">Vignette de la photo</string>
+
+    <string name="journal_title">Journal d\'envoi</string>
     <string name="journal_backedup">Sauvegardé</string>
     <string name="journal_waiting">En attente</string>
     <string name="journal_error">Erreur</string>
+
     <string name="menu_all_pictures">Sauvegarder toutes les photos</string>
-    <string name="name">Nom de la photo</string>
-    <string name="notif_start_title">Sauvegarde de photo démarrée</string>
-    <string name="notif_start_text">Votre photo est sur votre serveur.</string>
-    <string name="notif_success_title">Sauvegarde effectuée avec succès !</string>
     <string name="menu_test_server">Test du serveur</string>
-    <string name="toast_configuration_ok">La configuration du serveur est bonne.</string>
-    <string name="toast_configuration_ko">Le test du serveur a échoué, merci de vérifier sa configuration.</string>
+
+    <string name="notif_start_title">Sauvegarde de photo démarrée</string>
+    <string name="notif_start_text">Votre photo est en cours de sauvegarde.</string>
+    <string name="notif_success_title">Sauvegarde effectuée avec succès !</string>
+    <string name="notif_success_text">Votre photo est chez vous.</string>
+    <string name="notif_fail_text">Merci de réessayer plus tard.</string>
 
 </resources>

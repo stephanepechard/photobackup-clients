@@ -34,9 +34,11 @@
     <string name="toast_serverpassempty">The password cannot be empty!</string>
 
     <string name="notif_start_title">Ongoing photo backup</string>
-    <string name="notif_start_text">Your photo is on your server.</string>
+    <string name="notif_start_text">Your photo is being backed up on your server.</string>
     <string name="notif_success_title">Photo backup success!</string>
+    <string name="notif_success_text">Your photo is at home.</string>
     <string name="toast_configuration_ok">Server configuration is OK.</string>
     <string name="toast_configuration_ko">Server test failed, please verify your configuration.</string>
+    <string name="notif_fail_text">Please restart later.</string>
 
 </resources>

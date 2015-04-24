@@ -58,6 +58,7 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
 		addPreferencesFromResource(R.xml.preferences);
         defaultPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         defaultSharedPreferences = defaultPreferences.edit();
+        fillTextPreferences();
 
         // Hide upload journal access if it is empty
         int nbPicture = PBActivity.mediaStore.getMediaCount();
@@ -70,7 +71,7 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             final Preference pref = findPreference("uploadJournalPref");
             pref.setTitle(pref.getTitle() + " (" + nbPicture + ")");
         }
-	}
+    }
 
 
     @Override
@@ -99,9 +100,7 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             this.startOrStopService(sharedPreferences);
 
         } else if (key.equals(PREF_SERVER_URL)) {
-            final EditTextPreference textPreference = (EditTextPreference) findPreference(PREF_SERVER_URL);
-            textPreference.setSummary(sharedPreferences.getString(PREF_SERVER_URL, ""));
-
+            fillTextPreferences();
         } else if (key.equals(PREF_SERVER_PASS)) {
             this.createAndSetServerPass(sharedPreferences);
 
@@ -182,6 +181,7 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
         return false;
     }
 
+
     private void createAndSetServerPass(final SharedPreferences sharedPreferences) {
         // store only the hash of the password in the preferences
         if (!hashIsComputed) {
@@ -212,5 +212,11 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
         } else {
             hashIsComputed = false;
         }
+    }
+
+
+    private void fillTextPreferences() {
+        final EditTextPreference textPreference = (EditTextPreference) findPreference(PREF_SERVER_URL);
+        textPreference.setSummary(defaultPreferences.getString(PREF_SERVER_URL, this.getResources().getString(R.string.server_url_summary)));
     }
 }

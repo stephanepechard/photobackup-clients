@@ -103,7 +103,8 @@ public class PBService extends Service {
 
                     PBMedia mediaToUpload = mediaStore.getLastMediaInStore();
                     mediaStore.close();
-                    PBMediaSender.send(self, mediaToUpload);
+                    PBMediaSender mediaSender = new PBMediaSender();
+                    mediaSender.send(self, mediaToUpload);
                     //mediaStore.markMediaForUpload(mediaToUpload);
                 }
                 catch (Exception e) {

@@ -7,7 +7,7 @@ import android.database.Cursor;
 import java.io.Serializable;
 
 public class PBMedia implements Serializable {
-    private final static String LOG_TAG = "PBMedia";
+    final private static String LOG_TAG = "PBMedia";
     final private int id;
     final private String path;
     private PBMediaState state;
