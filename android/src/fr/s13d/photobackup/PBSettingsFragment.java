@@ -58,19 +58,13 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
 		addPreferencesFromResource(R.xml.preferences);
         defaultPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         defaultSharedPreferences = defaultPreferences.edit();
+        defaultSharedPreferences.apply();
         fillTextPreferences();
 
-        // Hide upload journal access if it is empty
-        int nbPicture = PBActivity.mediaStore.getMediaCount();
-        Log.i(LOG_TAG, "Found " + nbPicture + " picture(s)");
-        if (nbPicture == 0) {
-            final PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference("PBPreferences");
-            final PreferenceCategory preferenceCategory = (PreferenceCategory) findPreference("info_conf");
-            preferenceScreen.removePreference(preferenceCategory);
-        } else {
-            final Preference pref = findPreference("uploadJournalPref");
-            pref.setTitle(pref.getTitle() + " (" + nbPicture + ")");
-        }
+        final Preference pref = findPreference("uploadJournalPref");
+        pref.setTitle(this.getResources().getString(R.string.journal_title) + " " +
+                      this.getResources().getString(R.string.journal_title_waiting));
+        pref.setEnabled(false);
     }
 
 
@@ -107,7 +101,7 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             // update fragment
             final String serverPassHash = sharedPreferences.getString(PREF_SERVER_PASS_HASH, "");
             final EditTextPreference serverPassTextPreference = (EditTextPreference) findPreference(PREF_SERVER_PASS);
-            if (serverPassHash.isEmpty()) {
+            if (serverPassHash != null && serverPassHash.isEmpty()) {
                 serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary));
             } else {
                 serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary_set));
@@ -154,13 +148,13 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
 
     private boolean validateSettings() {
         String serverUrl = defaultPreferences.getString(PREF_SERVER_URL, "");
-        if (!URLUtil.isValidUrl(serverUrl) || serverUrl.isEmpty()) {
+        if (!URLUtil.isValidUrl(serverUrl) || serverUrl == null || serverUrl.isEmpty()) {
             Toast.makeText(getActivity(), R.string.toast_urisyntaxexception, Toast.LENGTH_LONG).show();
             return false;
         }
 
         String serverPassHash = defaultPreferences.getString(PREF_SERVER_PASS_HASH, "");
-        if (serverPassHash.isEmpty()) {
+        if (serverPassHash != null && serverPassHash.isEmpty()) {
             Toast.makeText(getActivity(), R.string.toast_serverpassempty, Toast.LENGTH_LONG).show();
             return false;
         }
@@ -185,30 +179,36 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
     private void createAndSetServerPass(final SharedPreferences sharedPreferences) {
         // store only the hash of the password in the preferences
         if (!hashIsComputed) {
-            final String pass = sharedPreferences.getString(PREF_SERVER_PASS, "");
-
+            MessageDigest md;
             try {
-                // compute the hash
-                MessageDigest md = MessageDigest.getInstance("SHA-512");
-                md.update(pass.getBytes());
-                byte[] mb = md.digest();
-                String hash = "";
-                for (byte temp : mb) {
-                    String s = Integer.toHexString(temp);
-                    while (s.length() < 2) {
-                        s = "0" + s;
-                    }
-                    s = s.substring(s.length() - 2);
-                    hash += s;
-                }
-
-                // set the hash in the preferences
-                defaultSharedPreferences.putString(PREF_SERVER_PASS_HASH, hash);
-                defaultSharedPreferences.commit();
-
+                md = MessageDigest.getInstance("SHA-512");
             } catch (NoSuchAlgorithmException e) {
                 Log.e(LOG_TAG, "ERROR: " + e.getMessage());
+                return;
             }
+
+            final String pass = sharedPreferences.getString(PREF_SERVER_PASS, null);
+            if (pass == null) {
+                return;
+            }
+
+            // compute the hash
+            md.update(pass.getBytes());
+            byte[] mb = md.digest();
+            String hash = "";
+            for (byte temp : mb) {
+                String s = Integer.toHexString(temp);
+                while (s.length() < 2) {
+                    s = "0" + s;
+                }
+                s = s.substring(s.length() - 2);
+                hash += s;
+            }
+
+            // set the hash in the preferences
+            defaultSharedPreferences.putString(PREF_SERVER_PASS_HASH, hash);
+            defaultSharedPreferences.commit();
+
         } else {
             hashIsComputed = false;
         }
@@ -219,4 +219,21 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
         final EditTextPreference textPreference = (EditTextPreference) findPreference(PREF_SERVER_URL);
         textPreference.setSummary(defaultPreferences.getString(PREF_SERVER_URL, this.getResources().getString(R.string.server_url_summary)));
     }
+
+
+    public void syncDidStop() {
+        // Hide upload journal access if it is empty
+        int nbPicture = PBActivity.mediaStore.getMedias().size();
+        Log.i(LOG_TAG, "Found " + nbPicture + " picture(s)");
+        if (nbPicture == 0) {
+            final PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference("PBPreferences");
+            final PreferenceCategory preferenceCategory = (PreferenceCategory) findPreference("info_conf");
+            preferenceScreen.removePreference(preferenceCategory);
+        } else {
+            final Preference pref = findPreference("uploadJournalPref");
+            pref.setTitle(this.getResources().getString(R.string.journal_title) + " (" + nbPicture + ")");
+            pref.setEnabled(true);
+        }
+    }
+
 }

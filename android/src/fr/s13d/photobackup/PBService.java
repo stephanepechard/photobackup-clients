@@ -24,7 +24,6 @@ import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.IBinder;
 import android.provider.MediaStore;
-import android.widget.Toast;
 
 
 public class PBService extends Service {
@@ -32,9 +31,11 @@ public class PBService extends Service {
 	private static final String LOG_TAG = "PBService";
     private static MediaContentObserver newMediaContentObserver;
     private static PBService self;
+    private PBMediaStore mediaStore;
+    private PBMediaSender mediaSender;
 
 
-	public PBService() {
+    public PBService() {
         self = this;
     }
 
@@ -48,21 +49,29 @@ public class PBService extends Service {
     public void onCreate() {
         super.onCreate();
         newMediaContentObserver = new MediaContentObserver();
+        mediaStore = new PBMediaStore(this);
+        mediaStore.sync(null);
+        mediaSender = new PBMediaSender();
         this.getApplicationContext().getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, newMediaContentObserver);
 
-        Toast.makeText(this, "PhotoBackup service is created.", Toast.LENGTH_SHORT).show();
         Log.i(LOG_TAG, "PhotoBackup service is created");
+        for (PBMedia media : mediaStore.getMedias()) {
+            if (media.getState() != PBMedia.PBMediaState.SYNCED) {
+                mediaSender.send(this, media); // TODO be careful, it is asynchronous!!
+            }
+        }
     }
 
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        newMediaContentObserver = null;
+        mediaStore.close();
         this.getApplicationContext().getContentResolver()
                 .unregisterContentObserver(newMediaContentObserver);
 
-        Toast.makeText(this, "PhotoBackup service has stopped.", Toast.LENGTH_SHORT).show();
         Log.i(LOG_TAG, "PhotoBackup service has stopped");
     }
 
@@ -72,7 +81,6 @@ public class PBService extends Service {
         super.onStartCommand(intent, flags, startId);
 
         if (intent != null) { // explicitly launch by the user
-            Toast.makeText(this, "PhotoBackup service has started.", Toast.LENGTH_SHORT).show();
             Log.i(LOG_TAG, "PhotoBackup service has started");
         }
 
@@ -98,18 +106,14 @@ public class PBService extends Service {
             Log.i(LOG_TAG, "MediaContentObserver:onChange()");
 
             if (uri.toString().equals("content://media/external/images/media")) {
-                PBMediaStore mediaStore = new PBMediaStore(self);
-                try {
 
-                    PBMedia mediaToUpload = mediaStore.getLastMediaInStore();
-                    mediaStore.close();
-                    PBMediaSender mediaSender = new PBMediaSender();
+                try {
+                    final PBMedia mediaToUpload = mediaStore.getLastMediaInStore();
+                    mediaToUpload.setState(PBMedia.PBMediaState.WAITING);
                     mediaSender.send(self, mediaToUpload);
-                    //mediaStore.markMediaForUpload(mediaToUpload);
                 }
                 catch (Exception e) {
                     Log.e(LOG_TAG, "Upload failed :-(");
-                    //Toast.makeText(self, "Upload failed :-(", Toast.LENGTH_SHORT).show();
                     e.printStackTrace();
                 }
             }

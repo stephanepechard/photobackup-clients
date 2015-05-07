@@ -9,20 +9,20 @@ import android.view.MenuItem;
 
 import com.crashlytics.android.Crashlytics;
 
-public class PBActivity extends Activity {
+public class PBActivity extends Activity implements PBMediaStoreListener {
 
     private static final String LOG_TAG = "PBActivity";
     public static PBMediaStore mediaStore;
-
+    private final PBSettingsFragment settingsFragment = new PBSettingsFragment();
 
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Crashlytics.start(this);
+        Crashlytics.start(this);
 
         mediaStore = new PBMediaStore(this);
+        mediaStore.sync(this);
 
-        final PBSettingsFragment settingsFragment = new PBSettingsFragment();
         getFragmentManager().beginTransaction().replace(android.R.id.content, settingsFragment).commit();
 	}
 
@@ -57,7 +57,7 @@ public class PBActivity extends Activity {
     private void showUploadConfirmationDialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Confirmation");
-        builder.setMessage(mediaStore.getMediaCount() + " pictures have been found, are you sure you want to upload them all?");
+        builder.setMessage(mediaStore.getMedias().size() + " pictures have been found, are you sure you want to upload them all?");
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 Log.i(LOG_TAG, "upload_history");
@@ -67,4 +67,9 @@ public class PBActivity extends Activity {
         builder.create().show();
     }
 
+
+    // PBMediaStoreListener callbacks
+    public void onSyncMediaStoreTaskPostExecute() {
+        settingsFragment.syncDidStop();
+    }
 }

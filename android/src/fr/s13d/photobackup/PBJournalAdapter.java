@@ -10,16 +10,14 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
-import java.util.List;
 
 
 public class PBJournalAdapter extends BaseAdapter {
-    private final List<PBMedia> medias;
 	private static LayoutInflater inflater;
     private Context context = null;
 
+
 	public PBJournalAdapter(final Activity activity) {
-        medias = PBActivity.mediaStore.getMedias();
 		inflater = (LayoutInflater)activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         context = activity;
 	}
@@ -27,13 +25,12 @@ public class PBJournalAdapter extends BaseAdapter {
 
 	@Override
 	public View getView(int position, View view, ViewGroup parent) {
-		if(view == null) {
-            Log.w("PBJournalAdapter", "inflater.inflate");
-			view = inflater.inflate(R.layout.list_row, parent, false);
-		}
-        final PBMedia media = medias.get(position);
-        if (media == null) {
-            Log.w("PBJournalAdapter", "media is null");
+        // create the view if not available
+        view = (view == null) ? inflater.inflate(R.layout.list_row, parent, false) : view;
+
+        // fetch media from store list
+        PBMedia media = PBActivity.mediaStore.getMedias().get(position);
+        if (media == null || media.getId() == -1) {
             return view;
         }
 
@@ -41,6 +38,7 @@ public class PBJournalAdapter extends BaseAdapter {
 		final ImageView thumbImageView = (ImageView)view.findViewById(R.id.thumbnail);
         // set a resource to show something nice in recycled views
         thumbImageView.setImageResource(android.R.drawable.ic_menu_gallery);
+        // set thumbnail to the view asynchronously
         final PBThumbnailTask task = new PBThumbnailTask(context, thumbImageView);
         task.execute(media.getId());
 
@@ -68,12 +66,12 @@ public class PBJournalAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return medias.size();
+        return PBActivity.mediaStore.getMedias().size();
     }
 
     @Override
     public Object getItem(final int position) {
-        return medias.get(position);
+        return PBActivity.mediaStore.getMediaAt(position);
     }
 
     @Override

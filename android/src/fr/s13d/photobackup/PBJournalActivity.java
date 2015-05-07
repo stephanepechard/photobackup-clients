@@ -9,20 +9,10 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import java.util.List;
-
 
 public class PBJournalActivity extends ListActivity {
 
-    private static final String LOG_TAG = "PBJournalActivity";
-    private final List<PBMedia> medias;
     private final PBMediaSender mediaSender = new PBMediaSender();
-
-
-    public PBJournalActivity() {
-        medias = PBActivity.mediaStore.getMedias();
-    }
-
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
@@ -35,7 +25,7 @@ public class PBJournalActivity extends ListActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final PBMedia media = medias.get(position);
+                final PBMedia media = PBActivity.mediaStore.getMedias().get(position);
 
                 final AlertDialog.Builder builder = new AlertDialog.Builder(self);
                 builder.setMessage("You can backup this picture now!").setTitle("Manual backup");

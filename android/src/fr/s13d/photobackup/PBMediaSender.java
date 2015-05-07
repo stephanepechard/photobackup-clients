@@ -38,7 +38,7 @@ public class PBMediaSender {
         // Create notification to be used during sending
         final NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         final Notification.Builder builder = new Notification.Builder(context);
-        builder.setSmallIcon(android.R.drawable.ic_menu_gallery);
+        builder.setSmallIcon(android.R.drawable.ic_menu_upload);
         builder.setLargeIcon(MediaStore.Images.Thumbnails.getThumbnail(context.getContentResolver(),
                 media.getId(), MediaStore.Images.Thumbnails.MINI_KIND, null));
 
@@ -67,8 +67,10 @@ public class PBMediaSender {
             public void onSuccess(int statusCode, Header[] headers, byte[] response) {
                 builder.setContentTitle(context.getResources().getString(R.string.notif_success_title))
                        .setContentText(context.getResources().getString(R.string.notif_success_text))
+                       .setSmallIcon(android.R.drawable.ic_menu_slideshow)
                        .setProgress(0, 0, false); // remove it
                 notificationManager.notify(0, builder.build());
+                media.setState(PBMedia.PBMediaState.SYNCED);
             }
 
             @Override
@@ -85,6 +87,7 @@ public class PBMediaSender {
                        .setSmallIcon(android.R.drawable.ic_dialog_alert)
                        .setProgress(0, 0, false); // remove it
                 notificationManager.notify(0, builder.build());
+                media.setState(PBMedia.PBMediaState.ERROR);
                 e.printStackTrace();
             }
 
