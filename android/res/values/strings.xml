@@ -40,5 +40,6 @@
     <string name="toast_configuration_ok">Server configuration is OK.</string>
     <string name="toast_configuration_ko">Server test failed, please verify your configuration.</string>
     <string name="notif_fail_text">Please restart later.</string>
+    <string name="journal_title_waiting"> (waiting&#8230;)</string>
 
 </resources>

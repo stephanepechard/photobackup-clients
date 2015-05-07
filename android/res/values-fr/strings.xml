@@ -39,5 +39,6 @@
     <string name="notif_success_title">Sauvegarde effectuée avec succès !</string>
     <string name="notif_success_text">Votre photo est chez vous.</string>
     <string name="notif_fail_text">Merci de réessayer plus tard.</string>
+    <string name="journal_title_waiting"> (en attente)</string>
 
 </resources>
