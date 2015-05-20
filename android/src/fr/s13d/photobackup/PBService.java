@@ -33,6 +33,9 @@ public class PBService extends Service {
     private static PBService self;
     private PBMediaStore mediaStore;
     private PBMediaSender mediaSender;
+    private PBSettingsFragment fragment = null;
+    private Binder binder;
+    private int mediaSize = 0;
 
 
     public PBService() {
@@ -40,17 +43,16 @@ public class PBService extends Service {
     }
 
 
-    public static PBService getInstance() {
-        return self;
-    }
-
-
+    //////////////
+    // Override //
+    //////////////
     @Override
     public void onCreate() {
         super.onCreate();
+        binder = new Binder();
         newMediaContentObserver = new MediaContentObserver();
         mediaStore = new PBMediaStore(this);
-        mediaStore.sync(null);
+        mediaStore.sync();
         mediaSender = new PBMediaSender();
         this.getApplicationContext().getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, newMediaContentObserver);
@@ -67,10 +69,10 @@ public class PBService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        this.getApplicationContext().getContentResolver().unregisterContentObserver(newMediaContentObserver);
         newMediaContentObserver = null;
         mediaStore.close();
-        this.getApplicationContext().getContentResolver()
-                .unregisterContentObserver(newMediaContentObserver);
+        mediaStore = null;
 
         Log.i(LOG_TAG, "PhotoBackup service has stopped");
     }
@@ -88,7 +90,22 @@ public class PBService extends Service {
     }
 
 
-    // ContentObserver to react on the creation of a new media
+    @Override
+    public IBinder onBind(Intent intent) {
+        return binder;
+    }
+
+
+    public class Binder extends android.os.Binder {
+        public PBService getService() {
+            return PBService.this;
+        }
+    }
+
+
+    /////////////////////////////////////////////////////////////
+    // ContentObserver to react on the creation of a new media //
+    /////////////////////////////////////////////////////////////
     private class MediaContentObserver extends ContentObserver {
 
         public MediaContentObserver() {
@@ -121,9 +138,24 @@ public class PBService extends Service {
     }
 
 
-	@Override
-	public IBinder onBind(final Intent intent) {
-		return null;
-	}
+    /////////////
+    // getters //
+    /////////////
+    public PBMediaStore getMediaStore() {
+        return mediaStore;
+    }
 
+
+    public int getMediaSize() {
+        return mediaStore.getMedias().size();
+    }
+
+
+    /////////////
+    // setters //
+    /////////////
+    public void setFragment(PBSettingsFragment fragment) {
+        mediaStore.setStoreInterface(fragment);
+        this.fragment = fragment;
+    }
 }

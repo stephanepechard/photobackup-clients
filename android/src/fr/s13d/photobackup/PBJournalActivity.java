@@ -25,7 +25,7 @@ public class PBJournalActivity extends ListActivity {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final PBMedia media = PBActivity.mediaStore.getMedias().get(position);
+                final PBMedia media = PBActivity.getMediaStore().getMedias().get(position);
 
                 final AlertDialog.Builder builder = new AlertDialog.Builder(self);
                 builder.setMessage("You can backup this picture now!").setTitle("Manual backup");

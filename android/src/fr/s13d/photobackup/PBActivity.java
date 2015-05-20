@@ -9,29 +9,21 @@ import android.view.MenuItem;
 
 import com.crashlytics.android.Crashlytics;
 
-public class PBActivity extends Activity implements PBMediaStoreListener {
+public class PBActivity extends Activity {
 
     private static final String LOG_TAG = "PBActivity";
-    public static PBMediaStore mediaStore;
-    private final PBSettingsFragment settingsFragment = new PBSettingsFragment();
+    private static final PBSettingsFragment settingsFragment = new PBSettingsFragment();
 
+
+    //////////////
+    // Override //
+    //////////////
 	@Override
 	protected void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         Crashlytics.start(this);
-
-        mediaStore = new PBMediaStore(this);
-        mediaStore.sync(this);
-
         getFragmentManager().beginTransaction().replace(android.R.id.content, settingsFragment).commit();
 	}
-
-
-    @Override
-    protected void onDestroy() {
-        mediaStore.close();
-        super.onDestroy();
-    }
 
 
     @Override
@@ -47,7 +39,7 @@ public class PBActivity extends Activity implements PBMediaStoreListener {
             showUploadConfirmationDialog();
             return true;
         } else if (item.getItemId() == R.id.action_test_server) {
-            PBMediaSender.test(this);
+            settingsFragment.testMediaSender();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -57,7 +49,7 @@ public class PBActivity extends Activity implements PBMediaStoreListener {
     private void showUploadConfirmationDialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Confirmation");
-        builder.setMessage(mediaStore.getMedias().size() + " pictures have been found, are you sure you want to upload them all?");
+        builder.setMessage(getMediaStore().getMedias().size() + " pictures have been found, are you sure you want to upload them all?");
         builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
                 Log.i(LOG_TAG, "upload_history");
@@ -68,8 +60,15 @@ public class PBActivity extends Activity implements PBMediaStoreListener {
     }
 
 
-    // PBMediaStoreListener callbacks
-    public void onSyncMediaStoreTaskPostExecute() {
-        settingsFragment.syncDidStop();
+    /////////////
+    // getters //
+    /////////////
+    public static PBMediaStore getMediaStore() {
+        try {
+            return settingsFragment.getService().getMediaStore();
+        }
+        catch (Exception e) {
+            return null;
+        }
     }
 }

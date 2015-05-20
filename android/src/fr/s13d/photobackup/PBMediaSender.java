@@ -19,12 +19,15 @@ import org.apache.http.Header;
 import java.io.File;
 import java.io.FileNotFoundException;
 
+import fr.s13d.photobackup.interfaces.PBMediaSenderInterface;
+
 
 public class PBMediaSender {
 
     private final static String LOG_TAG = "PBMediaSender";
     private final static String PASSWORD_PARAM = "password";
     private final static String UPFILE_PARAM = "upfile";
+    private final static String TEST_PATH = "/test";
     private static AsyncHttpClient syncHttpClient= new SyncHttpClient();
     private static AsyncHttpClient asyncHttpClient = new AsyncHttpClient();
 
@@ -106,26 +109,24 @@ public class PBMediaSender {
     }
 
 
-    public static void test(final Context context) {
+    public static void test(final Context context, final PBMediaSenderInterface senderInterface) {
+        Toast.makeText(context, "Testing server", Toast.LENGTH_SHORT).show();
+
         final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         final String serverUrl = prefs.getString(PBSettingsFragment.PREF_SERVER_URL, "");
         final String serverHash = prefs.getString(PBSettingsFragment.PREF_SERVER_PASS_HASH, "");
 
         final RequestParams params = new RequestParams(PASSWORD_PARAM, serverHash);
-        getClient().post(serverUrl + "/test", params, new AsyncHttpResponseHandler() {
+        getClient().post(serverUrl + TEST_PATH, params, new AsyncHttpResponseHandler() {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, byte[] response) {
-                Log.i(LOG_TAG, "onSuccess");
-                Toast.makeText(context, context.getResources().getString(R.string.toast_configuration_ok), Toast.LENGTH_SHORT).show();
+                senderInterface.onTestSuccess();
             }
 
             @Override
             public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
-                // called when response HTTP status is "4XX" (eg. 401, 403, 404)
-                Log.i(LOG_TAG, "onFailure");
-                Toast.makeText(context, context.getResources().getString(R.string.toast_configuration_ko), Toast.LENGTH_SHORT).show();
-                e.printStackTrace();
+                senderInterface.onTestFailure();
             }
 
         });

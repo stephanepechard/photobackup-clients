@@ -19,16 +19,17 @@
 package fr.s13d.photobackup;
 
 import android.app.ActivityManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
-import android.preference.PreferenceCategory;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.preference.PreferenceScreen;
 import android.preference.SwitchPreference;
 import android.webkit.URLUtil;
 import android.widget.Toast;
@@ -36,43 +37,79 @@ import android.widget.Toast;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import fr.s13d.photobackup.interfaces.PBMediaSenderInterface;
+import fr.s13d.photobackup.interfaces.PBMediaStoreInterface;
 
-public class PBSettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+public class PBSettingsFragment extends PreferenceFragment
+                                implements SharedPreferences.OnSharedPreferenceChangeListener,
+                                           PBMediaStoreInterface, PBMediaSenderInterface {
 
     private static final String LOG_TAG = "PBSettingsFragment";
-    private SharedPreferences defaultPreferences;
-    private SharedPreferences.Editor defaultSharedPreferences;
-    private Boolean hashIsComputed = false;
+    private static PBSettingsFragment self;
+    private PBService currentService;
+    private SharedPreferences preferences;
+    private SharedPreferences.Editor preferencesEditor;
+    private Preference uploadJournalPref;
+
+    private boolean hashIsComputed = false;
+    private boolean isBoundToService = false;
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
+
+        public void onServiceConnected(ComponentName className, IBinder binder) {
+            PBService.Binder b = (PBService.Binder) binder;
+            currentService = b.getService();
+            currentService.setFragment(self);
+            onSyncMediaStoreTaskPostExecute(); // update journal entries number
+            Log.i(LOG_TAG, "Connected to service");
+        }
+
+        public void onServiceDisconnected(ComponentName className) {
+            Log.i(LOG_TAG, "Disconnected to service");
+        }
+    };
 
     // should correspond to what is in preferences.xml
-    private static final String PREF_SERVICE_RUNNING = "PREF_SERVICE_RUNNING";
+    public static final String PREF_SERVICE_RUNNING = "PREF_SERVICE_RUNNING";
     public static final String PREF_SERVER_URL = "PREF_SERVER_URL";
     private static final String PREF_SERVER_PASS = "PREF_SERVER_PASS";
     public static final String PREF_SERVER_PASS_HASH = "PREF_SERVER_PASS_HASH";
     private static final String PREF_ONLY_WIFI = "PREF_ONLY_WIFI";
 
 
+    //////////////////
+    // Constructors //
+    //////////////////
+    public PBSettingsFragment() {
+        self = this;
+    }
+
+
+    //////////////
+    // Override //
+    //////////////
     @Override
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
-        defaultPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        defaultSharedPreferences = defaultPreferences.edit();
-        defaultSharedPreferences.apply();
-        fillTextPreferences();
+        preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        preferencesEditor = preferences.edit();
+        preferencesEditor.apply();
 
-        final Preference pref = findPreference("uploadJournalPref");
-        pref.setTitle(this.getResources().getString(R.string.journal_title) + " " +
-                      this.getResources().getString(R.string.journal_title_waiting));
-        pref.setEnabled(false);
+        initPreferences();
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
-        if (defaultPreferences != null) {
-            defaultPreferences.registerOnSharedPreferenceChangeListener(this);
+        if (preferences != null) {
+            preferences.registerOnSharedPreferenceChangeListener(this);
+        }
+        if (isPhotoBackupServiceRunning()) {
+            Intent intent = new Intent(this.getActivity(), PBService.class);
+            getActivity().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
+            isBoundToService = true;
         }
     }
 
@@ -80,26 +117,30 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
     @Override
     public void onPause() {
         super.onPause();
-        if (defaultPreferences != null) {
-            defaultPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        if (preferences != null) {
+            preferences.unregisterOnSharedPreferenceChangeListener(this);
+        }
+        if (isPhotoBackupServiceRunning() && isBoundToService) {
+            getActivity().unbindService(serviceConnection);
+            isBoundToService = false;
         }
     }
 
 
     @Override
-    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
+    public void onSharedPreferenceChanged(final SharedPreferences preferences, final String key) {
 
         if (key.equals(PREF_SERVICE_RUNNING)) {
-            Log.i(LOG_TAG, "PREF_SERVICE_RUNNING = " + sharedPreferences.getBoolean(PREF_SERVICE_RUNNING, false));
-            this.startOrStopService(sharedPreferences);
+            this.startOrStopService(preferences);
 
         } else if (key.equals(PREF_SERVER_URL)) {
-            fillTextPreferences();
+            updateServerUrlPreference();
+
         } else if (key.equals(PREF_SERVER_PASS)) {
-            this.createAndSetServerPass(sharedPreferences);
+            this.createAndSetServerPass(preferences);
 
             // update fragment
-            final String serverPassHash = sharedPreferences.getString(PREF_SERVER_PASS_HASH, "");
+            final String serverPassHash = preferences.getString(PREF_SERVER_PASS_HASH, "");
             final EditTextPreference serverPassTextPreference = (EditTextPreference) findPreference(PREF_SERVER_PASS);
             if (serverPassHash != null && serverPassHash.isEmpty()) {
                 serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary));
@@ -111,49 +152,57 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             hashIsComputed = true;
 
             // Remove the real password from the preferences, for security.
-            defaultSharedPreferences.putString(PREF_SERVER_PASS, "");
-            defaultSharedPreferences.commit();
+            preferencesEditor.putString(PREF_SERVER_PASS, "");
+            preferencesEditor.apply();
 
         } else if (key.equals(PREF_ONLY_WIFI)) {
             // Allow the user not to use the mobile network to upload the pictures
             Toast.makeText(getActivity(), "This has no effect for the moment :-)", Toast.LENGTH_SHORT).show();
             // TODO: implement
-        } else if (sharedPreferences == null) {
-            Log.e(LOG_TAG, "Error: sharedPreferences == null");
+        } else if (preferences == null) {
+            Log.e(LOG_TAG, "Error: preferences == null");
         }
 
     }
 
 
-    private void startOrStopService(final SharedPreferences sharedPreferences) {
-        if (sharedPreferences.getBoolean(PREF_SERVICE_RUNNING, false)) {
-            if (validateSettings()) {
-                final Intent serviceIntent = new Intent(getActivity(), PBService.class);
-                getActivity().startService(serviceIntent);
+    /////////////////////
+    // private methods //
+    /////////////////////
+    private void startOrStopService(final SharedPreferences preferences) {
+        boolean userDidStart = preferences.getBoolean(PREF_SERVICE_RUNNING, false);
+        Log.i(LOG_TAG, "PREF_SERVICE_RUNNING = " + userDidStart);
+
+        if (userDidStart) {
+            if (validatePreferences()) {
+                Log.i(LOG_TAG, "start PhotoBackup service");
+                testMediaSender();
             } else {
                 final SwitchPreference switchPreference = (SwitchPreference) findPreference(PREF_SERVICE_RUNNING);
                 switchPreference.setChecked(false);
             }
-        } else {
-            if (isPhotoBackupServiceRunning()) {
-                PBService service = PBService.getInstance();
-                if (service != null) {
-                    Log.i(LOG_TAG, "stop PhotoBackup service");
-                    service.stopSelf();
-                }
-            }
+        } else if (isPhotoBackupServiceRunning() && currentService != null) {
+            Log.i(LOG_TAG, "stop PhotoBackup service");
+            getActivity().unbindService(serviceConnection);
+            isBoundToService = false;
+            currentService.stopSelf();
+            currentService = null;
+
+            uploadJournalPref.setTitle("Launch the service to access the journal");
+            uploadJournalPref.setEnabled(false);
         }
+
     }
 
 
-    private boolean validateSettings() {
-        String serverUrl = defaultPreferences.getString(PREF_SERVER_URL, "");
+    private boolean validatePreferences() {
+        String serverUrl = preferences.getString(PREF_SERVER_URL, "");
         if (!URLUtil.isValidUrl(serverUrl) || serverUrl == null || serverUrl.isEmpty()) {
             Toast.makeText(getActivity(), R.string.toast_urisyntaxexception, Toast.LENGTH_LONG).show();
             return false;
         }
 
-        String serverPassHash = defaultPreferences.getString(PREF_SERVER_PASS_HASH, "");
+        String serverPassHash = preferences.getString(PREF_SERVER_PASS_HASH, "");
         if (serverPassHash != null && serverPassHash.isEmpty()) {
             Toast.makeText(getActivity(), R.string.toast_serverpassempty, Toast.LENGTH_LONG).show();
             return false;
@@ -169,9 +218,11 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
         final ActivityManager manager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
         for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
             if (PBService.class.getName().equals(service.service.getClassName())) {
+                Log.i(LOG_TAG, "Service is running");
                 return true;
             }
         }
+        Log.i(LOG_TAG, "Service is NOT running");
         return false;
     }
 
@@ -206,8 +257,8 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
             }
 
             // set the hash in the preferences
-            defaultSharedPreferences.putString(PREF_SERVER_PASS_HASH, hash);
-            defaultSharedPreferences.commit();
+            preferencesEditor.putString(PREF_SERVER_PASS_HASH, hash);
+            preferencesEditor.apply();
 
         } else {
             hashIsComputed = false;
@@ -215,25 +266,66 @@ public class PBSettingsFragment extends PreferenceFragment implements SharedPref
     }
 
 
-    private void fillTextPreferences() {
+    private void initPreferences() {
+        // init
+        uploadJournalPref = findPreference("uploadJournalPref");
+
+        // switch on if service is running
+        final SwitchPreference switchPreference = (SwitchPreference) findPreference(PREF_SERVICE_RUNNING);
+        switchPreference.setChecked(isPhotoBackupServiceRunning());
+
+        // show set server url
+        updateServerUrlPreference();
+    }
+
+
+    private void updateServerUrlPreference() {
         final EditTextPreference textPreference = (EditTextPreference) findPreference(PREF_SERVER_URL);
-        textPreference.setSummary(defaultPreferences.getString(PREF_SERVER_URL, this.getResources().getString(R.string.server_url_summary)));
+        textPreference.setSummary(preferences.getString(PREF_SERVER_URL, this.getResources().getString(R.string.server_url_summary)));
     }
 
 
-    public void syncDidStop() {
-        // Hide upload journal access if it is empty
-        int nbPicture = PBActivity.mediaStore.getMedias().size();
-        Log.i(LOG_TAG, "Found " + nbPicture + " picture(s)");
-        if (nbPicture == 0) {
-            final PreferenceScreen preferenceScreen = (PreferenceScreen) findPreference("PBPreferences");
-            final PreferenceCategory preferenceCategory = (PreferenceCategory) findPreference("info_conf");
-            preferenceScreen.removePreference(preferenceCategory);
-        } else {
-            final Preference pref = findPreference("uploadJournalPref");
-            pref.setTitle(this.getResources().getString(R.string.journal_title) + " (" + nbPicture + ")");
-            pref.setEnabled(true);
-        }
+    ////////////////////
+    // public methods //
+    ////////////////////
+    public void testMediaSender() {
+        PBMediaSender.test(getActivity(), this);
     }
 
+
+    ////////////////////////////////////
+    // PBMediaStoreListener callbacks //
+    ////////////////////////////////////
+    public void onSyncMediaStoreTaskPostExecute() {
+        uploadJournalPref.setTitle(this.getResources().getString(R.string.journal_title) +
+                " (" + currentService.getMediaSize() + ")");
+        uploadJournalPref.setEnabled(currentService.getMediaSize() > 0);
+    }
+
+
+    ///////////////////////////////////
+    // PBMediaSenderEvents callbacks //
+    ///////////////////////////////////
+    public void onTestSuccess() {
+        Toast.makeText(getActivity(), this.getResources().getString(R.string.toast_configuration_ok), Toast.LENGTH_SHORT).show();
+        final Intent serviceIntent = new Intent(getActivity(), PBService.class);
+        getActivity().startService(serviceIntent);
+        getActivity().bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
+        isBoundToService = true;
+    }
+
+
+    public void onTestFailure() {
+        Toast.makeText(getActivity(), this.getResources().getString(R.string.toast_configuration_ko), Toast.LENGTH_SHORT).show();
+        final SwitchPreference switchPreference = (SwitchPreference) findPreference(PBSettingsFragment.PREF_SERVICE_RUNNING);
+        switchPreference.setChecked(false);
+    }
+
+
+    /////////////
+    // getters //
+    /////////////
+    public PBService getService() {
+        return currentService;
+    }
 }

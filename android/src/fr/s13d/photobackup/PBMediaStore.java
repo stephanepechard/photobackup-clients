@@ -8,21 +8,25 @@ import android.os.AsyncTask;
 import android.provider.MediaStore;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import fr.s13d.photobackup.interfaces.PBMediaStoreInterface;
 
 public class PBMediaStore {
 
     private static final String LOG_TAG = "PBMediaStore";
     private final PBMediaStore store;
     private static Context context;
+    private static List<PBMedia> mediaList;
+    private static SyncMediaStoreTask syncTask;
+    private static AddAllMediasTask allMediasTask;
     private static SharedPreferences picturesPreferences;
     private static SharedPreferences.Editor picturesPreferencesEditor;
     private static final Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
     public static final String PhotoBackupPicturesSharedPreferences = "PhotoBackupPicturesSharedPreferences";
-    private static List<PBMedia> mediaList;
 
 
     public PBMediaStore(Context theContext) {
@@ -32,11 +36,18 @@ public class PBMediaStore {
         picturesPreferences = context.getSharedPreferences(PhotoBackupPicturesSharedPreferences, Context.MODE_PRIVATE);
         picturesPreferencesEditor = picturesPreferences.edit();
         picturesPreferencesEditor.apply();
-        //new AddAllMediasTask().execute();
     }
 
 
     public void close() {
+        if (syncTask != null) {
+            syncTask.cancel(true);
+        }
+
+        if (allMediasTask != null) {
+            allMediasTask.cancel(true);
+        }
+
         mediaList = null;
         picturesPreferences = null;
         picturesPreferencesEditor = null;
@@ -46,6 +57,7 @@ public class PBMediaStore {
     public void setMediaState(PBMedia media, PBMedia.PBMediaState mediaState) {
         if (media.getState() != mediaState) {
             Log.i(LOG_TAG, "setMediaState: " + media);
+            media.setState(mediaState);
             picturesPreferencesEditor.putString(String.valueOf(media.getId()), mediaState.name()).apply();
         }
     }
@@ -61,8 +73,7 @@ public class PBMediaStore {
 
                 try {
                     String stateString = picturesPreferences.getString(String.valueOf(media.getId()), PBMedia.PBMediaState.WAITING.name());
-                    setMediaState(media, PBMedia.PBMediaState.SYNCED);
-                    media.setState(PBMedia.PBMediaState.valueOf(stateString));
+                    setMediaState(media, PBMedia.PBMediaState.valueOf(stateString));
                 }
                 catch (Exception e) {
                     Log.e(LOG_TAG, "Explosion!!");
@@ -92,16 +103,6 @@ public class PBMediaStore {
     }
 
 
-    private Comparator<PBMedia> mediaComparator = new Comparator<PBMedia>() {
-        public int compare(PBMedia obj1, PBMedia obj2) {
-            if (obj1 == null || obj2 == null) {
-                return 0;
-            }
-            return obj1.getPath().compareTo(obj2.getPath());
-        }
-    };
-
-
     public PBMedia getLastMediaInStore() {
         int id = 0;
         final String[] projection = new String[] { "_id" };
@@ -115,52 +116,99 @@ public class PBMediaStore {
     }
 
 
-    public int getMediaCount() {
-        return context.getSharedPreferences(PhotoBackupPicturesSharedPreferences,
-                Context.MODE_PRIVATE).getAll().size();
-    }
-
-
-    public void sync(PBMediaStoreListener listener) {
-        new SyncMediaStoreTask(listener).execute();
+    /////////////////////////////////
+    // Synchronize the media store //
+    /////////////////////////////////
+    public void sync() {
+        if (syncTask != null) {
+            syncTask.cancel(true);
+        }
+        syncTask = new SyncMediaStoreTask();
+        syncTask.execute();
+        Log.i(LOG_TAG, "Start SyncMediaStoreTask");
     }
 
 
     private class SyncMediaStoreTask extends AsyncTask<Void, Void, Void> {
-        final private PBMediaStoreListener listener;
+        private PBMediaStoreInterface storeInterface;
 
-        public SyncMediaStoreTask(PBMediaStoreListener listener) {
-            this.listener = listener;
-        }
-
+        /////////////////////////////////
+        // What makes you an AsyncTask //
+        /////////////////////////////////
         protected Void doInBackground(Void... voids) {
 
-            // Remove pictures in preferences that were removed from store
+            // Get all known pictures in PB
             Map<String, ?> mediasMap = context.getSharedPreferences(PBMediaStore.PhotoBackupPicturesSharedPreferences,
                     Context.MODE_PRIVATE).getAll();
-            for (String key : new ArrayList<>(mediasMap.keySet())) {
-                final int mediaId = Integer.parseInt(key);
-                final PBMedia media = store.getMedia(mediaId);
-                final Cursor cursor = context.getContentResolver().query(uri, null, "_id = " + mediaId, null, null);
-                if (cursor == null || !cursor.moveToFirst() || media == null || media.getPath().isEmpty()) {
-                    Log.d(LOG_TAG, "Remove media " + key + " from preference");
-                    picturesPreferencesEditor.remove(key).apply();
+            Set<String> inCursor = new HashSet<>();
+
+            // Get all pictures on device
+            final String[] projection = new String[] { "_id", "_data" };
+            final Cursor cursor = context.getContentResolver().query(uri, projection, null, null, "date_added DESC");
+
+            // loop through them to sync
+            PBMedia media;
+            String stateString;
+            PBMedia.PBMediaState state;
+            while (cursor != null && cursor.moveToNext()) {
+                if(syncTask.isCancelled()) {
+                    Log.i(LOG_TAG, "SyncMediaStoreTask cancelled");
+                    return null;
                 }
-                else {
-                    mediaList.add(media); // populate list
-                }
-                if (cursor != null && !cursor.isClosed()) {
-                    cursor.close();
-                }
+                // build media
+                media = new PBMedia(context, cursor);
+                stateString = (String)mediasMap.get(Integer.toString(media.getId()));
+                state = (stateString != null) ?
+                        PBMedia.PBMediaState.valueOf(stateString) : PBMedia.PBMediaState.WAITING;
+                setMediaState(media, state);
+                mediaList.add(media); // populate list
+                inCursor.add(Integer.toString(media.getId()));
             }
-            Collections.sort(mediaList, mediaComparator); // order depending on the path
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+
+            // purge pictures in preferences that were removed from device
+            Set<String> inCursorCopy = new HashSet<>(inCursor);
+            Set<String> inMap = new HashSet<>(mediasMap.keySet());
+            inMap.removeAll(inCursor);
+            inCursor.removeAll(inCursorCopy);
+            inMap.addAll(inCursor);
+
+            for (String key : inMap) {
+                Log.d(LOG_TAG, "Remove media " + key + " from preference");
+                picturesPreferencesEditor.remove(key).apply();
+            }
+
             return null;
         }
 
         protected void onPostExecute(Void result) {
-            if (listener != null) {
-                listener.onSyncMediaStoreTaskPostExecute();
+            if (storeInterface != null) {
+                storeInterface.onSyncMediaStoreTaskPostExecute();
             }
+            Log.i(LOG_TAG, "Stop SyncMediaStoreTask");
+        }
+
+        public void setStoreInterface(PBMediaStoreInterface storeInterface) {
+            this.storeInterface = storeInterface;
+            Log.i(LOG_TAG, "storeInterface is set to: " + storeInterface);
+        }
+    }
+
+
+    public void setStoreInterface(PBMediaStoreInterface storeInterface) {
+        syncTask.setStoreInterface(storeInterface);
+    }
+
+    ///////////////////////////////////////////////
+    // Add all local pictures to the media store //
+    ///////////////////////////////////////////////
+    public void addAllMedias() {
+        if (allMediasTask == null) {
+            allMediasTask = new AddAllMediasTask();
+            allMediasTask.execute();
+            Log.i(LOG_TAG, "Start AddAllMediasTask");
         }
     }
 
@@ -171,6 +219,10 @@ public class PBMediaStore {
             final Cursor cursor = context.getContentResolver().query(uri, projection, null, null, "date_added DESC");
             PBMedia media;
             while (cursor != null && cursor.moveToNext()) {
+                if(allMediasTask.isCancelled()) {
+                    Log.i(LOG_TAG, "AddAllMediasTask cancelled");
+                    return null;
+                }
                 media = new PBMedia(context, cursor);
                 setMediaState(media, PBMedia.PBMediaState.WAITING);
             }

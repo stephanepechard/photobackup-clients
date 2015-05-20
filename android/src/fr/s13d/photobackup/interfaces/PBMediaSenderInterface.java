@@ -16,9 +16,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-package fr.s13d.photobackup;
+package fr.s13d.photobackup.interfaces;
 
 
-public interface PBMediaStoreListener {
-    void onSyncMediaStoreTaskPostExecute();
+public interface PBMediaSenderInterface {
+    void onTestSuccess();
+    void onTestFailure();
 }

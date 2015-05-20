@@ -29,7 +29,7 @@ public class PBJournalAdapter extends BaseAdapter {
         view = (view == null) ? inflater.inflate(R.layout.list_row, parent, false) : view;
 
         // fetch media from store list
-        PBMedia media = PBActivity.mediaStore.getMedias().get(position);
+        PBMedia media = PBActivity.getMediaStore().getMedias().get(position);
         if (media == null || media.getId() == -1) {
             return view;
         }
@@ -66,12 +66,12 @@ public class PBJournalAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return PBActivity.mediaStore.getMedias().size();
+        return PBActivity.getMediaStore().getMedias().size();
     }
 
     @Override
     public Object getItem(final int position) {
-        return PBActivity.mediaStore.getMediaAt(position);
+        return PBActivity.getMediaStore().getMediaAt(position);
     }
 
     @Override

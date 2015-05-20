@@ -7,7 +7,6 @@ import android.database.Cursor;
 import java.io.Serializable;
 
 public class PBMedia implements Serializable {
-    final private static String LOG_TAG = "PBMedia";
     final private int id;
     final private String path;
     private PBMediaState state;
@@ -55,7 +54,9 @@ public class PBMedia implements Serializable {
     }
 
     public void setState(PBMediaState mediaState) {
-        this.state = mediaState;
+        if (this.state != mediaState) {
+            this.state = mediaState;
+        }
     }
 
 }
