@@ -10,6 +10,7 @@ public class PBMedia implements Serializable {
     final private int id;
     final private String path;
     private PBMediaState state;
+    Context context;
     public enum PBMediaState { WAITING, SYNCED, ERROR }
 
 
@@ -24,6 +25,7 @@ public class PBMedia implements Serializable {
         SharedPreferences preferences = context.getSharedPreferences(PBMediaStore.PhotoBackupPicturesSharedPreferences, Context.MODE_PRIVATE);
         String stateString = preferences.getString(String.valueOf(this.id), PBMedia.PBMediaState.WAITING.name());
         this.state = PBMedia.PBMediaState.valueOf(stateString);
+        this.context = context;
     }
 
 
@@ -56,6 +58,10 @@ public class PBMedia implements Serializable {
     public void setState(PBMediaState mediaState) {
         if (this.state != mediaState) {
             this.state = mediaState;
+            Log.i("PBMedia", "Setting state " + mediaState.toString() + " to " + this.getPath());
+
+            SharedPreferences preferences = context.getSharedPreferences(PBMediaStore.PhotoBackupPicturesSharedPreferences, Context.MODE_PRIVATE);
+            preferences.edit().putString(String.valueOf(this.getId()), mediaState.name()).apply();
         }
     }
 
