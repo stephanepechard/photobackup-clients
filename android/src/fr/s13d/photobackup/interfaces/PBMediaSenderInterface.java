@@ -20,6 +20,9 @@ package fr.s13d.photobackup.interfaces;
 
 
 public interface PBMediaSenderInterface {
+    void onSendSuccess();
+    void onSendFailure();
+
     void onTestSuccess();
     void onTestFailure();
 }

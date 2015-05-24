@@ -59,7 +59,7 @@ public class PBSettingsFragment extends PreferenceFragment
         public void onServiceConnected(ComponentName className, IBinder binder) {
             PBService.Binder b = (PBService.Binder) binder;
             currentService = b.getService();
-            currentService.setFragment(self);
+            currentService.getMediaStore().addInterface(self);
             onSyncMediaStoreTaskPostExecute(); // update journal entries number
             Log.i(LOG_TAG, "Connected to service");
         }
@@ -92,20 +92,22 @@ public class PBSettingsFragment extends PreferenceFragment
 	public void onCreate(final Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
-        preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        preferencesEditor = preferences.edit();
-        preferencesEditor.apply();
-
-        initPreferences();
     }
 
 
     @Override
     public void onResume() {
         super.onResume();
-        if (preferences != null) {
-            preferences.registerOnSharedPreferenceChangeListener(this);
+
+        if (preferences == null) {
+            preferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            preferencesEditor = preferences.edit();
+            preferencesEditor.apply();
+
+            initPreferences();
         }
+        preferences.registerOnSharedPreferenceChangeListener(this);
+
         if (isPhotoBackupServiceRunning()) {
             Intent intent = new Intent(this.getActivity(), PBService.class);
             getActivity().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
@@ -289,7 +291,9 @@ public class PBSettingsFragment extends PreferenceFragment
     // public methods //
     ////////////////////
     public void testMediaSender() {
-        PBMediaSender.test(getActivity(), this);
+        PBMediaSender mediaSender = new PBMediaSender();
+        mediaSender.addInterface(this);
+        mediaSender.test(getActivity());
     }
 
 
@@ -297,9 +301,11 @@ public class PBSettingsFragment extends PreferenceFragment
     // PBMediaStoreListener callbacks //
     ////////////////////////////////////
     public void onSyncMediaStoreTaskPostExecute() {
-        uploadJournalPref.setTitle(this.getResources().getString(R.string.journal_title) +
-                " (" + currentService.getMediaSize() + ")");
-        uploadJournalPref.setEnabled(currentService.getMediaSize() > 0);
+        if(isAdded()) { // to be sure the fragment is currently attached to the activity
+            uploadJournalPref.setTitle(this.getResources().getString(R.string.journal_title) +
+                    " (" + currentService.getMediaSize() + ")");
+            uploadJournalPref.setEnabled(currentService.getMediaSize() > 0);
+        }
     }
 
 
@@ -320,6 +326,9 @@ public class PBSettingsFragment extends PreferenceFragment
         final SwitchPreference switchPreference = (SwitchPreference) findPreference(PBSettingsFragment.PREF_SERVICE_RUNNING);
         switchPreference.setChecked(false);
     }
+
+    public void onSendSuccess() {}
+    public void onSendFailure() {}
 
 
     /////////////

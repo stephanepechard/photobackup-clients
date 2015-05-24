@@ -25,17 +25,18 @@ import android.net.Uri;
 import android.os.IBinder;
 import android.provider.MediaStore;
 
+import fr.s13d.photobackup.interfaces.PBMediaSenderInterface;
+import fr.s13d.photobackup.interfaces.PBMediaStoreInterface;
 
-public class PBService extends Service {
+
+public class PBService extends Service implements PBMediaStoreInterface, PBMediaSenderInterface {
 
 	private static final String LOG_TAG = "PBService";
     private static MediaContentObserver newMediaContentObserver;
     private static PBService self;
     private PBMediaStore mediaStore;
     private PBMediaSender mediaSender;
-    private PBSettingsFragment fragment = null;
     private Binder binder;
-    private int mediaSize = 0;
 
 
     public PBService() {
@@ -52,17 +53,14 @@ public class PBService extends Service {
         binder = new Binder();
         newMediaContentObserver = new MediaContentObserver();
         mediaStore = new PBMediaStore(this);
-        mediaStore.sync();
+        mediaStore.addInterface(this);
         mediaSender = new PBMediaSender();
+        mediaSender.addInterface(this);
         this.getApplicationContext().getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, newMediaContentObserver);
 
         Log.i(LOG_TAG, "PhotoBackup service is created");
-        for (PBMedia media : mediaStore.getMedias()) {
-            if (media.getState() != PBMedia.PBMediaState.SYNCED) {
-                mediaSender.send(this, media); // TODO be careful, it is asynchronous!!
-            }
-        }
+        mediaStore.sync();
     }
 
 
@@ -100,6 +98,25 @@ public class PBService extends Service {
         public PBService getService() {
             return PBService.this;
         }
+    }
+
+
+    public void sendNextMedia() {
+        if (mediaStore != null) {
+            for (PBMedia media : mediaStore.getMedias()) {
+                if (media.getState() != PBMedia.PBMediaState.SYNCED) {
+                    mediaSender.send(this, media);
+                    break;
+                }
+            }
+        }
+    }
+
+    ////////////////////////////////////
+    // PBMediaStoreListener callbacks //
+    ////////////////////////////////////
+    public void onSyncMediaStoreTaskPostExecute() {
+        //sendNextMedia();
     }
 
 
@@ -151,11 +168,14 @@ public class PBService extends Service {
     }
 
 
-    /////////////
-    // setters //
-    /////////////
-    public void setFragment(PBSettingsFragment fragment) {
-        mediaStore.setStoreInterface(fragment);
-        this.fragment = fragment;
+    //////////////////////////////////////
+    // PBMediaSenderInterface callbacks //
+    //////////////////////////////////////
+    public void onSendSuccess() {
+        Log.i(LOG_TAG, "Send next media! NOT");
+        //sendNextMedia();
     }
+    public void onSendFailure() {}
+    public void onTestSuccess() {}
+    public void onTestFailure() {}
 }

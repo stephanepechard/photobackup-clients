@@ -18,7 +18,6 @@ import fr.s13d.photobackup.interfaces.PBMediaStoreInterface;
 public class PBMediaStore {
 
     private static final String LOG_TAG = "PBMediaStore";
-    private final PBMediaStore store;
     private static Context context;
     private static List<PBMedia> mediaList;
     private static SyncMediaStoreTask syncTask;
@@ -27,15 +26,20 @@ public class PBMediaStore {
     private static SharedPreferences.Editor picturesPreferencesEditor;
     private static final Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
     public static final String PhotoBackupPicturesSharedPreferences = "PhotoBackupPicturesSharedPreferences";
+    private List<PBMediaStoreInterface> interfaces = new ArrayList<>();
 
 
     public PBMediaStore(Context theContext) {
-        store = this;
         context = theContext;
         mediaList = new ArrayList<>();
         picturesPreferences = context.getSharedPreferences(PhotoBackupPicturesSharedPreferences, Context.MODE_PRIVATE);
         picturesPreferencesEditor = picturesPreferences.edit();
         picturesPreferencesEditor.apply();
+    }
+
+
+    public void addInterface(PBMediaStoreInterface storeInterface) {
+        interfaces.add(storeInterface);
     }
 
 
@@ -54,15 +58,6 @@ public class PBMediaStore {
     }
 
 
-    public void setMediaState(PBMedia media, PBMedia.PBMediaState mediaState) {
-        if (media.getState() != mediaState) {
-            Log.i(LOG_TAG, "setMediaState: " + media);
-            media.setState(mediaState);
-            picturesPreferencesEditor.putString(String.valueOf(media.getId()), mediaState.name()).apply();
-        }
-    }
-
-
     public PBMedia getMedia(int id) {
 
         PBMedia media = null;
@@ -73,7 +68,7 @@ public class PBMediaStore {
 
                 try {
                     String stateString = picturesPreferences.getString(String.valueOf(media.getId()), PBMedia.PBMediaState.WAITING.name());
-                    setMediaState(media, PBMedia.PBMediaState.valueOf(stateString));
+                    media.setState(PBMedia.PBMediaState.valueOf(stateString));
                 }
                 catch (Exception e) {
                     Log.e(LOG_TAG, "Explosion!!");
@@ -130,7 +125,6 @@ public class PBMediaStore {
 
 
     private class SyncMediaStoreTask extends AsyncTask<Void, Void, Void> {
-        private PBMediaStoreInterface storeInterface;
 
         /////////////////////////////////
         // What makes you an AsyncTask //
@@ -160,7 +154,7 @@ public class PBMediaStore {
                 stateString = (String)mediasMap.get(Integer.toString(media.getId()));
                 state = (stateString != null) ?
                         PBMedia.PBMediaState.valueOf(stateString) : PBMedia.PBMediaState.WAITING;
-                setMediaState(media, state);
+                media.setState(state);
                 mediaList.add(media); // populate list
                 inCursor.add(Integer.toString(media.getId()));
             }
@@ -184,22 +178,13 @@ public class PBMediaStore {
         }
 
         protected void onPostExecute(Void result) {
-            if (storeInterface != null) {
+            for(PBMediaStoreInterface storeInterface : interfaces) {
                 storeInterface.onSyncMediaStoreTaskPostExecute();
             }
             Log.i(LOG_TAG, "Stop SyncMediaStoreTask");
         }
-
-        public void setStoreInterface(PBMediaStoreInterface storeInterface) {
-            this.storeInterface = storeInterface;
-            Log.i(LOG_TAG, "storeInterface is set to: " + storeInterface);
-        }
     }
 
-
-    public void setStoreInterface(PBMediaStoreInterface storeInterface) {
-        syncTask.setStoreInterface(storeInterface);
-    }
 
     ///////////////////////////////////////////////
     // Add all local pictures to the media store //
@@ -224,7 +209,7 @@ public class PBMediaStore {
                     return null;
                 }
                 media = new PBMedia(context, cursor);
-                setMediaState(media, PBMedia.PBMediaState.WAITING);
+                media.setState(PBMedia.PBMediaState.WAITING);
             }
             if (cursor != null && !cursor.isClosed()) {
                 cursor.close();
