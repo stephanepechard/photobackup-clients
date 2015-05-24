@@ -12,30 +12,36 @@ import android.widget.ListView;
 
 public class PBJournalActivity extends ListActivity {
 
-    private final PBMediaSender mediaSender = new PBMediaSender();
+    private PBMediaSender mediaSender;
 
     @Override
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_journal);
 
+
         // on click listener
         final Activity self = this;
+        mediaSender = new PBMediaSender();
         final ListView listView = (ListView)findViewById(android.R.id.list);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                final PBMedia media = PBActivity.getMediaStore().getMedias().get(position);
+                try {
+                    final PBMedia media = PBActivity.getMediaStore().getMedias().get(position);
 
-                final AlertDialog.Builder builder = new AlertDialog.Builder(self);
-                builder.setMessage("You can backup this picture now!").setTitle("Manual backup");
-                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        mediaSender.send(self, media);
-                    }
-                });
-                builder.setNegativeButton("Cancel", null);
-                builder.create().show();
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(self);
+                    builder.setMessage("You can backup this picture now!").setTitle("Manual backup");
+                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int id) {
+                            mediaSender.send(self, media);
+                        }
+                    });
+                    builder.setNegativeButton("Cancel", null);
+                    builder.create().show();
+                } catch(NullPointerException e) {
+                    e.printStackTrace();
+                }
             }
         });
 
