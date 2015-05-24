@@ -27,6 +27,7 @@
     <string name="thumbnail_description">Vignette de la photo</string>
 
     <string name="journal_title">Journal d\'envoi</string>
+    <string name="journal_noaccess">Activez le service pour voir le journal.</string>
     <string name="journal_backedup">Sauvegardé</string>
     <string name="journal_waiting">En attente</string>
     <string name="journal_error">Erreur</string>

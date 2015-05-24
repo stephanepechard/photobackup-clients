@@ -17,6 +17,7 @@
     <string name="info_conf">Informations</string>
     
     <string name="journal_title">Upload journal</string>
+    <string name="journal_noaccess">Launch the service to access the journal.</string>
 
     <string name="error_uploadfailed">Photo backup failed :-(</string>
 

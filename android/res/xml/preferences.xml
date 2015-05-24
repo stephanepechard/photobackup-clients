@@ -42,7 +42,7 @@
 
         <Preference android:key="uploadJournalPref"
                     android:enabled="false"
-                    android:title="@string/journal_title">
+                    android:title="@string/journal_noaccess">
             <intent
                 android:action="android.intent.action.VIEW"
                 android:targetPackage="fr.s13d.photobackup"
