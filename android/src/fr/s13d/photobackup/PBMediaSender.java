@@ -20,7 +20,9 @@ package fr.s13d.photobackup;
 
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Looper;
 import android.preference.PreferenceManager;
@@ -65,9 +67,17 @@ public class PBMediaSender {
         this.builder.setSmallIcon(android.R.drawable.ic_menu_upload)
                     .setContentTitle(context.getResources().getString(R.string.app_name));
 
+        // add action to reopen the activity
+        Intent intent = new Intent(context, PBActivity.class);
+        intent.setAction(Intent.ACTION_MAIN);
+        intent.addCategory(Intent.CATEGORY_LAUNCHER);
+        PendingIntent resultPendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        this.builder.setContentIntent(resultPendingIntent);
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         serverUrl = prefs.getString(PBSettingsFragment.PREF_SERVER_URL, "");
         params.put(PASSWORD_PARAM, prefs.getString(PBSettingsFragment.PREF_SERVER_PASS_HASH, ""));
+
     }
 
 
