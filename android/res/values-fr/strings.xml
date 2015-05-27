@@ -26,7 +26,6 @@
     <string name="journal_waiting">En attente</string>
     <string name="journal_error">Erreur</string>
 
-    <string name="menu_all_pictures">Sauvegarder toutes les photos</string>
     <string name="menu_test_server">Test du serveur</string>
 
     <string name="notif_start_text">Votre photo est en cours de sauvegarde.</string>

@@ -83,8 +83,7 @@ public class PBMediaSender {
             public void onStart() {}
 
             @Override
-            public void onProgress(long bytesWritten, long totalSize) {
-            }
+            public void onProgress(long bytesWritten, long totalSize) {}
 
         });
     }

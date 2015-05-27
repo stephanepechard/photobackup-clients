@@ -113,6 +113,8 @@ public class PBSettingsFragment extends PreferenceFragment
             getActivity().bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE);
             isBoundToService = true;
         }
+
+        updateServerPasswordPreference(preferences);
     }
 
 
@@ -130,25 +132,17 @@ public class PBSettingsFragment extends PreferenceFragment
 
 
     @Override
-    public void onSharedPreferenceChanged(final SharedPreferences preferences, final String key) {
+    public void onSharedPreferenceChanged(final SharedPreferences sharedPreferences, final String key) {
 
         if (key.equals(PREF_SERVICE_RUNNING)) {
-            this.startOrStopService(preferences);
+            startOrStopService(sharedPreferences);
 
         } else if (key.equals(PREF_SERVER_URL)) {
             updateServerUrlPreference();
 
         } else if (key.equals(PREF_SERVER_PASS)) {
-            this.createAndSetServerPass(preferences);
-
-            // update fragment
-            final String serverPassHash = preferences.getString(PREF_SERVER_PASS_HASH, "");
-            final EditTextPreference serverPassTextPreference = (EditTextPreference) findPreference(PREF_SERVER_PASS);
-            if (serverPassHash != null && serverPassHash.isEmpty()) {
-                serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary));
-            } else {
-                serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary_set));
-            }
+            createAndSetServerPass(sharedPreferences);
+            updateServerPasswordPreference(sharedPreferences);
 
         } else if (key.equals(PREF_SERVER_PASS_HASH)) {
             hashIsComputed = true;
@@ -161,7 +155,7 @@ public class PBSettingsFragment extends PreferenceFragment
             // Allow the user not to use the mobile network to upload the pictures
             Toast.makeText(getActivity(), "This has no effect for the moment :-)", Toast.LENGTH_SHORT).show();
             // TODO: implement
-        } else if (preferences == null) {
+        } else if (sharedPreferences == null) {
             Log.e(LOG_TAG, "Error: preferences == null");
         }
 
@@ -171,6 +165,19 @@ public class PBSettingsFragment extends PreferenceFragment
     /////////////////////
     // private methods //
     /////////////////////
+    private void initPreferences() {
+        // init
+        uploadJournalPref = findPreference("uploadJournalPref");
+
+        // switch on if service is running
+        final SwitchPreference switchPreference = (SwitchPreference) findPreference(PREF_SERVICE_RUNNING);
+        switchPreference.setChecked(isPhotoBackupServiceRunning());
+
+        // show set server url
+        updateServerUrlPreference();
+    }
+
+
     private void startOrStopService(final SharedPreferences preferences) {
         boolean userDidStart = preferences.getBoolean(PREF_SERVICE_RUNNING, false);
         Log.i(LOG_TAG, "PREF_SERVICE_RUNNING = " + userDidStart);
@@ -268,16 +275,14 @@ public class PBSettingsFragment extends PreferenceFragment
     }
 
 
-    private void initPreferences() {
-        // init
-        uploadJournalPref = findPreference("uploadJournalPref");
-
-        // switch on if service is running
-        final SwitchPreference switchPreference = (SwitchPreference) findPreference(PREF_SERVICE_RUNNING);
-        switchPreference.setChecked(isPhotoBackupServiceRunning());
-
-        // show set server url
-        updateServerUrlPreference();
+    private void updateServerPasswordPreference(final SharedPreferences sharedPreferences) {
+        final String serverPassHash = sharedPreferences.getString(PREF_SERVER_PASS_HASH, "");
+        final EditTextPreference serverPassTextPreference = (EditTextPreference) findPreference(PREF_SERVER_PASS);
+        if (serverPassHash != null && serverPassHash.isEmpty()) {
+            serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary));
+        } else {
+            serverPassTextPreference.setSummary(getResources().getString(R.string.server_password_summary_set));
+        }
     }
 
 

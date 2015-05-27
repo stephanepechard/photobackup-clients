@@ -16,7 +16,7 @@
 
     <string name="toast_urisyntaxexception">The server address is invalid!</string>
     <string name="toast_serverpassempty">The password cannot be empty!</string>
-    <string name="toast_configuration_ok">Server configuration is OK.</string>
+    <string name="toast_configuration_ok">Server configuration is valid, great!</string>
     <string name="toast_configuration_ko">Server test failed, please verify your configuration.</string>
 
     <string name="info_conf">Informations</string>
@@ -26,7 +26,6 @@
     <string name="journal_waiting">Waiting</string>
     <string name="journal_error">Error</string>
 
-    <string name="menu_all_pictures">Backup all photos</string>
     <string name="menu_test_server">Test server</string>
 
     <string name="notif_start_text">Your photo is being backed up on your server.</string>
