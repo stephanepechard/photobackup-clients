@@ -10,7 +10,6 @@
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:name="com.orm.SugarApp"
         android:theme="@style/AppTheme" >
         <activity
             android:name=".PBActivity"
@@ -40,12 +39,6 @@
 
         <!-- Crashlytics config-->
         <meta-data android:name="com.crashlytics.ApiKey" android:value="f438f3c329e7f060aab30c701f31d5847a694769"/>
-
-        <!-- SugarORM config-->
-        <meta-data android:name="DATABASE" android:value="photobackup.db" />
-        <meta-data android:name="VERSION" android:value="1" />
-        <meta-data android:name="QUERY_LOG" android:value="true" />
-        <meta-data android:name="DOMAIN_PACKAGE_NAME" android:value="fr.s13d.photobackup" />
 
     </application>
 
