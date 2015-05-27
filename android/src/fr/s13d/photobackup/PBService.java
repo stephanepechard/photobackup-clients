@@ -33,15 +33,9 @@ public class PBService extends Service implements PBMediaStoreInterface, PBMedia
 
 	private static final String LOG_TAG = "PBService";
     private static MediaContentObserver newMediaContentObserver;
-    private static PBService self;
     private PBMediaStore mediaStore;
     private PBMediaSender mediaSender;
     private Binder binder;
-
-
-    public PBService() {
-        self = this;
-    }
 
 
     //////////////
@@ -54,7 +48,7 @@ public class PBService extends Service implements PBMediaStoreInterface, PBMedia
         newMediaContentObserver = new MediaContentObserver();
         mediaStore = new PBMediaStore(this);
         mediaStore.addInterface(this);
-        mediaSender = new PBMediaSender();
+        mediaSender = new PBMediaSender(this);
         mediaSender.addInterface(this);
         this.getApplicationContext().getContentResolver().registerContentObserver(
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI, false, newMediaContentObserver);
@@ -105,19 +99,31 @@ public class PBService extends Service implements PBMediaStoreInterface, PBMedia
         if (mediaStore != null) {
             for (PBMedia media : mediaStore.getMedias()) {
                 if (media.getState() != PBMedia.PBMediaState.SYNCED) {
-                    mediaSender.send(this, media);
+                    mediaSender.send(media);
                     break;
                 }
             }
         }
     }
 
+
     ////////////////////////////////////
     // PBMediaStoreListener callbacks //
     ////////////////////////////////////
     public void onSyncMediaStoreTaskPostExecute() {
-        //sendNextMedia();
+        sendNextMedia();
     }
+
+
+    //////////////////////////////////////
+    // PBMediaSenderInterface callbacks //
+    //////////////////////////////////////
+    public void onSendSuccess() {
+        sendNextMedia();
+    }
+    public void onSendFailure() {}
+    public void onTestSuccess() {}
+    public void onTestFailure() {}
 
 
     /////////////////////////////////////////////////////////////
@@ -142,9 +148,9 @@ public class PBService extends Service implements PBMediaStoreInterface, PBMedia
             if (uri.toString().equals("content://media/external/images/media")) {
 
                 try {
-                    final PBMedia mediaToUpload = mediaStore.getLastMediaInStore();
-                    mediaToUpload.setState(PBMedia.PBMediaState.WAITING);
-                    mediaSender.send(self, mediaToUpload);
+                    final PBMedia media = mediaStore.getLastMediaInStore();
+                    media.setState(PBMedia.PBMediaState.WAITING);
+                    mediaSender.send(media);
                 }
                 catch (Exception e) {
                     Log.e(LOG_TAG, "Upload failed :-(");
@@ -167,15 +173,4 @@ public class PBService extends Service implements PBMediaStoreInterface, PBMedia
         return mediaStore.getMedias().size();
     }
 
-
-    //////////////////////////////////////
-    // PBMediaSenderInterface callbacks //
-    //////////////////////////////////////
-    public void onSendSuccess() {
-        Log.i(LOG_TAG, "Send next media! NOT");
-        //sendNextMedia();
-    }
-    public void onSendFailure() {}
-    public void onTestSuccess() {}
-    public void onTestFailure() {}
 }

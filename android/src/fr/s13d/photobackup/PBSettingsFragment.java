@@ -291,9 +291,9 @@ public class PBSettingsFragment extends PreferenceFragment
     // public methods //
     ////////////////////
     public void testMediaSender() {
-        PBMediaSender mediaSender = new PBMediaSender();
+        PBMediaSender mediaSender = new PBMediaSender(getActivity());
         mediaSender.addInterface(this);
-        mediaSender.test(getActivity());
+        mediaSender.test();
     }
 
 
@@ -313,7 +313,7 @@ public class PBSettingsFragment extends PreferenceFragment
     // PBMediaSenderEvents callbacks //
     ///////////////////////////////////
     public void onTestSuccess() {
-        Toast.makeText(getActivity(), this.getResources().getString(R.string.toast_configuration_ok), Toast.LENGTH_SHORT).show();
+        Toast.makeText(getActivity(), getResources().getString(R.string.toast_configuration_ok), Toast.LENGTH_SHORT).show();
         final Intent serviceIntent = new Intent(getActivity(), PBService.class);
         getActivity().startService(serviceIntent);
         getActivity().bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
@@ -322,13 +322,20 @@ public class PBSettingsFragment extends PreferenceFragment
 
 
     public void onTestFailure() {
-        Toast.makeText(getActivity(), this.getResources().getString(R.string.toast_configuration_ko), Toast.LENGTH_SHORT).show();
+        Toast.makeText(getActivity(), getResources().getString(R.string.toast_configuration_ko), Toast.LENGTH_SHORT).show();
         final SwitchPreference switchPreference = (SwitchPreference) findPreference(PBSettingsFragment.PREF_SERVICE_RUNNING);
         switchPreference.setChecked(false);
     }
 
-    public void onSendSuccess() {}
-    public void onSendFailure() {}
+
+    public void onSendSuccess() {
+        Toast.makeText(getActivity(), getResources().getString(R.string.notif_toast_text), Toast.LENGTH_SHORT).show();
+    }
+
+
+    public void onSendFailure()  {
+        Toast.makeText(getActivity(), getResources().getString(R.string.error_uploadfailed), Toast.LENGTH_SHORT).show();
+    }
 
 
     /////////////

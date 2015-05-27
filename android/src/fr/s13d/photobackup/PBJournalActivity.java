@@ -22,7 +22,7 @@ public class PBJournalActivity extends ListActivity {
 
         // on click listener
         final Activity self = this;
-        mediaSender = new PBMediaSender();
+        mediaSender = new PBMediaSender(this);
         final ListView listView = (ListView)findViewById(android.R.id.list);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -34,7 +34,7 @@ public class PBJournalActivity extends ListActivity {
                     builder.setMessage("You can backup this picture now!").setTitle("Manual backup");
                     builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
-                            mediaSender.send(self, media);
+                            mediaSender.send(media);
                         }
                     });
                     builder.setNegativeButton("Cancel", null);

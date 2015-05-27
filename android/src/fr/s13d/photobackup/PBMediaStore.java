@@ -21,7 +21,6 @@ public class PBMediaStore {
     private static Context context;
     private static List<PBMedia> mediaList;
     private static SyncMediaStoreTask syncTask;
-    private static AddAllMediasTask allMediasTask;
     private static SharedPreferences picturesPreferences;
     private static SharedPreferences.Editor picturesPreferencesEditor;
     private static final Uri uri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
@@ -46,10 +45,6 @@ public class PBMediaStore {
     public void close() {
         if (syncTask != null) {
             syncTask.cancel(true);
-        }
-
-        if (allMediasTask != null) {
-            allMediasTask.cancel(true);
         }
 
         mediaList = null;
@@ -182,43 +177,6 @@ public class PBMediaStore {
                 storeInterface.onSyncMediaStoreTaskPostExecute();
             }
             Log.i(LOG_TAG, "Stop SyncMediaStoreTask");
-        }
-    }
-
-
-    ///////////////////////////////////////////////
-    // Add all local pictures to the media store //
-    ///////////////////////////////////////////////
-    public void addAllMedias() {
-        if (allMediasTask == null) {
-            allMediasTask = new AddAllMediasTask();
-            allMediasTask.execute();
-            Log.i(LOG_TAG, "Start AddAllMediasTask");
-        }
-    }
-
-
-    private class AddAllMediasTask extends AsyncTask<Void, Void, Void> {
-        protected Void doInBackground(Void... voids) {
-            final String[] projection = new String[] { "_id", "_data" };
-            final Cursor cursor = context.getContentResolver().query(uri, projection, null, null, "date_added DESC");
-            PBMedia media;
-            while (cursor != null && cursor.moveToNext()) {
-                if(allMediasTask.isCancelled()) {
-                    Log.i(LOG_TAG, "AddAllMediasTask cancelled");
-                    return null;
-                }
-                media = new PBMedia(context, cursor);
-                media.setState(PBMedia.PBMediaState.WAITING);
-            }
-            if (cursor != null && !cursor.isClosed()) {
-                cursor.close();
-            }
-            return null;
-        }
-
-        protected void onPostExecute(Void result) {
-            Log.d(LOG_TAG, "All medias added!");
         }
     }
 
