@@ -116,6 +116,7 @@ public class PBSettingsFragment extends PreferenceFragment
         }
 
         updateServerPasswordPreference(preferences);
+        updateUploadJournalPreference();
     }
 
 
@@ -197,11 +198,8 @@ public class PBSettingsFragment extends PreferenceFragment
             isBoundToService = false;
             currentService.stopSelf();
             currentService = null;
-
-            uploadJournalPref.setTitle("Launch the service to access the journal");
-            uploadJournalPref.setEnabled(false);
+            updateUploadJournalPreference();
         }
-
     }
 
 
@@ -293,6 +291,19 @@ public class PBSettingsFragment extends PreferenceFragment
     }
 
 
+    private void updateUploadJournalPreference() {
+        // isAdded() to be sure the fragment is currently attached to the activity
+        if (isAdded() && isPhotoBackupServiceRunning() && currentService != null) {
+            uploadJournalPref.setTitle(this.getResources().getString(R.string.journal_title) +
+                " (" + currentService.getMediaSize() + ")");
+            uploadJournalPref.setEnabled(currentService.getMediaSize() > 0);
+        } else {
+            uploadJournalPref.setTitle(this.getResources().getString(R.string.journal_noaccess));
+            uploadJournalPref.setEnabled(false);
+        }
+    }
+
+
     ////////////////////
     // public methods //
     ////////////////////
@@ -307,11 +318,7 @@ public class PBSettingsFragment extends PreferenceFragment
     // PBMediaStoreListener callbacks //
     ////////////////////////////////////
     public void onSyncMediaStoreTaskPostExecute() {
-        if(isAdded()) { // to be sure the fragment is currently attached to the activity
-            uploadJournalPref.setTitle(this.getResources().getString(R.string.journal_title) +
-                    " (" + currentService.getMediaSize() + ")");
-            uploadJournalPref.setEnabled(currentService.getMediaSize() > 0);
-        }
+        updateUploadJournalPreference();
     }
 
 
