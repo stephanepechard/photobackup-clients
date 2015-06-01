@@ -14,6 +14,10 @@
     <string name="server_password_summary">Le mot de passe du serveur.</string>
     <string name="server_password_summary_set">Le mot de passe est renseigné.</string>
 
+    <string name="only_wifi_title">Sauvegarde des photos</string>
+    <string name="only_wifi">Via Wi-Fi uniquement</string>
+    <string name="not_only_wifi">Via Wi-Fi ou réseau mobile</string>
+
     <string name="toast_urisyntaxexception">L\'adresse du serveur est invalide !</string>
     <string name="toast_serverpassempty">Le mot de passe ne peut pas être vide !</string>
     <string name="toast_configuration_ok">La configuration du serveur est bonne.</string>

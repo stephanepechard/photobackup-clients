@@ -75,7 +75,8 @@ public class PBSettingsFragment extends PreferenceFragment
     public static final String PREF_SERVER_URL = "PREF_SERVER_URL";
     private static final String PREF_SERVER_PASS = "PREF_SERVER_PASS";
     public static final String PREF_SERVER_PASS_HASH = "PREF_SERVER_PASS_HASH";
-    private static final String PREF_ONLY_WIFI = "PREF_ONLY_WIFI";
+    public static final String PREF_WIFI_ONLY = "PREF_WIFI_ONLY";
+    public static final Boolean DEFAULT_WIFI_ONLY = false;
 
 
     //////////////////
@@ -147,16 +148,14 @@ public class PBSettingsFragment extends PreferenceFragment
             updateServerPasswordPreference(sharedPreferences);
 
         } else if (key.equals(PREF_SERVER_PASS_HASH)) {
+            // Remove the real password from the preferences, for security.
+            preferencesEditor.putString(PREF_SERVER_PASS, "").apply();
             hashIsComputed = true;
 
-            // Remove the real password from the preferences, for security.
-            preferencesEditor.putString(PREF_SERVER_PASS, "");
-            preferencesEditor.apply();
+        } else if (key.equals(PREF_WIFI_ONLY)) {
+            Boolean wifiOnly = sharedPreferences.getBoolean(PREF_WIFI_ONLY, DEFAULT_WIFI_ONLY);
+            preferencesEditor.putBoolean(PREF_WIFI_ONLY, wifiOnly).apply();
 
-        } else if (key.equals(PREF_ONLY_WIFI)) {
-            // Allow the user not to use the mobile network to upload the pictures
-            Toast.makeText(getActivity(), "This has no effect for the moment :-)", Toast.LENGTH_SHORT).show();
-            // TODO: implement
         } else if (sharedPreferences == null) {
             Log.e(LOG_TAG, "Error: preferences == null");
         }
@@ -341,14 +340,8 @@ public class PBSettingsFragment extends PreferenceFragment
     }
 
 
-    public void onSendSuccess() {
-        Toast.makeText(getActivity(), getResources().getString(R.string.notif_toast_text), Toast.LENGTH_SHORT).show();
-    }
-
-
-    public void onSendFailure()  {
-        Toast.makeText(getActivity(), getResources().getString(R.string.error_uploadfailed), Toast.LENGTH_SHORT).show();
-    }
+    public void onSendSuccess() {}
+    public void onSendFailure()  {}
 
 
     /////////////

@@ -14,6 +14,10 @@
     <string name="server_password_summary">The password of the server.</string>
     <string name="server_password_summary_set">The password is set.</string>
 
+    <string name="only_wifi_title">Back up photos</string>
+    <string name="only_wifi">Over Wi-Fi only</string>
+    <string name="not_only_wifi">Over Wi-Fi or mobile network</string>
+
     <string name="toast_urisyntaxexception">The server address is invalid!</string>
     <string name="toast_serverpassempty">The password cannot be empty!</string>
     <string name="toast_configuration_ok">Server configuration is valid, great!</string>

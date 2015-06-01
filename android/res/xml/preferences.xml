@@ -12,6 +12,14 @@
         android:defaultValue="false"
         android:disableDependentsState="true" />
 
+    <CheckBoxPreference
+        android:key="PREF_WIFI_ONLY"
+        android:title="@string/only_wifi_title"
+        android:summaryOn="@string/only_wifi"
+        android:summaryOff="@string/not_only_wifi"
+        android:defaultValue="false"
+        android:dependency="PREF_SERVICE_RUNNING" />
+
 
     <PreferenceCategory
         android:title="@string/server_conf"
@@ -50,20 +58,4 @@
         </Preference>
     </PreferenceCategory>
 
-
-<!--
-        <PreferenceCategory
-            android:title="@string/device_conf"
-            android:key="device_conf">
-
-            <CheckBoxPreference
-                android:key="pref_only_wifi"
-                android:title="@string/only_wifi_title"
-                android:summaryOn="@string/only_wifi"
-                android:summaryOff="@string/not_only_wifi"
-                android:defaultValue="false"
-                android:dependency="PREF_SERVICE_RUNNING" />
-
-        </PreferenceCategory>
--->
 </PreferenceScreen>

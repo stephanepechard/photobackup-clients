@@ -24,6 +24,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
@@ -51,6 +53,7 @@ public class PBMediaSender {
     private final static String TEST_PATH = "/test";
     private final Context context;
     private final String serverUrl;
+    private final SharedPreferences prefs;
     private final NotificationManager notificationManager;
     private final Notification.Builder builder;
     private static AsyncHttpClient client = new AsyncHttpClient();
@@ -74,14 +77,41 @@ public class PBMediaSender {
         PendingIntent resultPendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
         this.builder.setContentIntent(resultPendingIntent);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+        this.prefs = PreferenceManager.getDefaultSharedPreferences(context);
         serverUrl = prefs.getString(PBSettingsFragment.PREF_SERVER_URL, "");
         params.put(PASSWORD_PARAM, prefs.getString(PBSettingsFragment.PREF_SERVER_PASS_HASH, ""));
 
     }
 
 
+    public void addInterface(PBMediaSenderInterface senderInterface) {
+        interfaces.add(senderInterface);
+    }
+
+
+    ////////////////
+    // Send media //
+    ////////////////
     public void send(final PBMedia media) {
+        // user preference
+        Boolean wifiOnly = prefs.getBoolean(PBSettingsFragment.PREF_WIFI_ONLY,
+                                            PBSettingsFragment.DEFAULT_WIFI_ONLY);
+
+        // test current network
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo info = cm.getActiveNetworkInfo();
+        if (wifiOnly) {
+            if (info != null && info.isConnected() && info.getType() == ConnectivityManager.TYPE_WIFI) {
+                sendMedia(media); // send if on wifi and user ask for wifi only
+            }
+        } else {
+            sendMedia(media); // always send if user do not care about wifi only
+        }
+
+    }
+
+
+    private void sendMedia(final PBMedia media) {
         builder.setContentText(context.getResources().getString(R.string.notif_start_text))
                 .setLargeIcon(MediaStore.Images.Thumbnails.getThumbnail(context.getContentResolver(),
                         media.getId(), MediaStore.Images.Thumbnails.MINI_KIND, null));
@@ -108,15 +138,45 @@ public class PBMediaSender {
             }
 
             @Override // called before request is started
-            public void onStart() {}
+            public void onStart() {
+            }
 
             @Override
-            public void onProgress(long bytesWritten, long totalSize) {}
+            public void onProgress(long bytesWritten, long totalSize) {
+            }
 
         });
     }
 
 
+    ///////////////
+    // Send test //
+    ///////////////
+    public void test() {
+        Toast.makeText(context, "Testing server", Toast.LENGTH_SHORT).show();
+        client.post(serverUrl + TEST_PATH, params, new AsyncHttpResponseHandler() {
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, byte[] response) {
+                for (PBMediaSenderInterface senderInterface : interfaces) {
+                    senderInterface.onTestSuccess();
+                }
+            }
+
+            @Override
+            public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
+                for (PBMediaSenderInterface senderInterface : interfaces) {
+                    senderInterface.onTestFailure();
+                }
+            }
+
+        });
+    }
+
+
+    /////////////////////
+    // Private methods //
+    /////////////////////
     private void sendDidSucceed(final PBMedia media) {
         media.setState(PBMedia.PBMediaState.SYNCED);
         for (PBMediaSenderInterface senderInterface : interfaces) {
@@ -154,33 +214,6 @@ public class PBMediaSender {
         }
 
         notificationManager.notify(0, builder.build());
-    }
-
-
-    public void test() {
-        Toast.makeText(context, "Testing server", Toast.LENGTH_SHORT).show();
-        client.post(serverUrl + TEST_PATH, params, new AsyncHttpResponseHandler() {
-
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, byte[] response) {
-                for (PBMediaSenderInterface senderInterface : interfaces) {
-                    senderInterface.onTestSuccess();
-                }
-            }
-
-            @Override
-            public void onFailure(int statusCode, Header[] headers, byte[] errorResponse, Throwable e) {
-                for (PBMediaSenderInterface senderInterface : interfaces) {
-                    senderInterface.onTestFailure();
-                }
-            }
-
-        });
-    }
-
-
-    public void addInterface(PBMediaSenderInterface senderInterface) {
-        interfaces.add(senderInterface);
     }
 
 }
