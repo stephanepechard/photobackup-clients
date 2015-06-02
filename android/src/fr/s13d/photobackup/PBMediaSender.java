@@ -67,7 +67,7 @@ public class PBMediaSender {
         this.context = context;
         this.notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         this.builder = new Notification.Builder(context);
-        this.builder.setSmallIcon(android.R.drawable.ic_menu_upload)
+        this.builder.setSmallIcon(R.drawable.ic_backup_white_48dp)
                     .setContentTitle(context.getResources().getString(R.string.app_name));
 
         // add action to reopen the activity
@@ -178,6 +178,7 @@ public class PBMediaSender {
     // Private methods //
     /////////////////////
     private void sendDidSucceed(final PBMedia media) {
+        builder.setSmallIcon(R.drawable.ic_done_white_48dp);
         media.setState(PBMedia.PBMediaState.SYNCED);
         for (PBMediaSenderInterface senderInterface : interfaces) {
             senderInterface.onSendSuccess();
